@@ -1,0 +1,121 @@
+/* General Styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+.App {
+  text-align: center;
+}
+
+/* Navbar Styling */
+.navbar {
+  background-color: #343a40 !important;
+  padding: 10px 20px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #007bff;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff !important;
+  font-size: 1.5rem;
+}
+
+.navbar-brand img {
+  width: 40px;
+  height: 40px;
+}
+
+.navbar-nav {
+  margin-left: auto;
+}
+
+.navbar-nav .nav-link {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  color: #ddd !important;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #fff !important;
+}
+
+/* Secondary Tabs Styling */
+.navbar-tabs {
+  background-color: #e9ecef;
+  padding: 0; /* Remove padding to align perfectly */
+}
+
+.navbar-tabs .nav-link {
+  font-size: 1rem;
+  padding: 10px 15px;
+  color: #007bff;
+  border-radius: 0; /* No border radius for seamless alignment */
+  border-bottom: 2px solid transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar-tabs .nav-link.active {
+  background-color: #fff;
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+}
+
+/* Remove Spacing between Navbars */
+.navbar + .navbar-tabs {
+  margin-top: -1px;
+}
+
+/* Form Section Styling */
+.form-section {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.form-control {
+  border-radius: 5px;
+  border: 1px solid #ced4da;
+  font-size: 1rem;
+  padding: 10px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Button Styling */
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004080;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .navbar-tabs .nav-link {
+    font-size: 0.9rem;
+    padding: 8px 10px;
+  }
+}
