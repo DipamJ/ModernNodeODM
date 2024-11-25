@@ -1,0 +1,46 @@
+/* Dashboard Container */
+.dashboard-container {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  
+  /* Navbar */
+  .navbar-brand {
+    font-weight: bold;
+    color: #ffffff;
+  }
+  
+  .navbar {
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Dropdown Menu */
+  .dropdown-toggle {
+    color: #ffffff;
+  }
+  
+  .dropdown-menu {
+    min-width: 200px;
+  }
+  
+  /* Welcome Card */
+  .welcome-card {
+    background-color: #ffffff;
+    border: none;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .welcome-card-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #343a40;
+  }
+  
+  .welcome-card-text {
+    color: #6c757d;
+    font-size: 1.1em;
+  }  

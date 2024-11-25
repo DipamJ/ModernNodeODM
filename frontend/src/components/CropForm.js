@@ -10,80 +10,76 @@ export default function CropForm() {
   const location = useLocation();
   const [crops, setCrops] = useState([]); // State for crop list
   const [isEditing, setIsEditing] = useState(false); // Edit mode
-  const [currentCropId, setCurrentCropId] = useState(null); // Current crop being edited
-  const [cropName, setCropName] = useState(''); // Crop name input
+  const [editRowId, setEditRowId] = useState(null); // Row ID being edited
+  const [editCropName, setEditCropName] = useState(''); // Crop name for editing
+  const [newCropName, setNewCropName] = useState('');
+
+  const fetchCrops = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/crops');
+      setCrops(response.data); // Set crop list in state
+    } catch (error) {
+      console.error('Error fetching crops:', error);
+    }
+  };
 
   // Fetch crop list on component mount
   useEffect(() => {
-    const fetchCrops = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/crops');
-        debugger;
-        setCrops(response.data); // Set crop list in state
-      } catch (error) { 
-        console.error('Error fetching crops:', error);
-      }
-    };
     fetchCrops();
   }, []);
 
-  const handleChange = (e) => {
-    setCropName(e.target.value); // Update crop name state
-  };
-
-  const handleSubmit = async (e) => {
+  const handleAddCrop = async (e) => {
     e.preventDefault();
-    if (!cropName) {
+    if (!newCropName) {
       alert('Crop name cannot be empty');
       return;
     }
-
-    if (isEditing) {
-      // Update crop if in edit mode
-      try {
-        await axios.put(`http://localhost:5000/crops/${currentCropId}`, { name: cropName });
-        alert('Crop updated successfully!');
-        setCrops((prev) =>
-          prev.map((crop) => (crop.id === currentCropId ? { ...crop, Name: cropName } : crop))
-        );
-        setIsEditing(false);
-        setCropName('');
-      } catch (error) {
-        console.error('Error updating crop:', error);
-        alert('Failed to update crop. Check console for details.');
-      }
-    } else {
-      // Add new crop
-      try {
-        const response = await axios.post('http://localhost:5000/crops', { name: cropName });
-        console.log('Crop Added:', response.data);
-        alert('Crop added successfully!');
-      } catch (error) {
-        console.error('Error adding crop:', error);
-        alert('Failed to add crop. Check console for details.');
-      }
+    try {
+      const response = await axios.post('http://localhost:5000/crops', { name: newCropName });
+      setCrops([...crops, response.data]);
+      setNewCropName('');
+      await fetchCrops();
+    } catch (error) {
+      console.error('Error adding crop:', error);
+      alert('Failed to add crop.');
     }
   };
 
   const handleEdit = (crop) => {
-    setIsEditing(true);
-    setCurrentCropId(crop.id);
-    setCropName(crop.Name);
+    // setIsEditing(true);
+    setEditRowId(crop.ID);
+    setEditCropName(crop.Name);
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`http://localhost:5000/crops/${editRowId}`, { name: editCropName });
+      setCrops((prev) => prev.map((crop) => (crop.ID === editRowId ? { ...crop, Name: editCropName } : crop)));
+      // setIsEditing(false);
+      setEditRowId(null);
+      setEditCropName('');
+      await fetchCrops();
+    } catch (error) {
+      console.error('Error updating crop:', error);
+      alert('Failed to update crop.');
+    }
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
-    setCropName('');
+    // setIsEditing(false);
+    setEditRowId(null);
+    setEditCropName('');
   };
 
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/crops/${id}`);
-      alert('Crop deleted successfully!');
-      setCrops((prev) => prev.filter((crop) => crop.id !== id));
+      setCrops((prev) => prev.filter((crop) => crop.ID !== id));
+      await fetchCrops();
     } catch (error) {
       console.error('Error deleting crop:', error);
-      alert('Failed to delete crop. Check console for details.');
+      alert('Failed to delete crop.');
     }
   };
 
@@ -93,26 +89,29 @@ export default function CropForm() {
 
   return (
     <Container fluid className="mt-4">
-      <Navbar bg="dark" variant="dark" expand="lg" className="mb-0">
-            <Container>
-            <Navbar.Brand href="#" className="d-flex align-items-center">
-                <img
-                src={`${process.env.PUBLIC_URL}/logo.png`}
-                width="40"
-                height="40"
-                className="d-inline-block align-top me-2"
-                alt="West Texas Cotton Logo"
-                />
-                <span className="navbar-brand-text">West Texas Cotton</span>
-            </Navbar.Brand>
-            <Navbar.Toggle aria-controls="navbar-nav" />
-            <Navbar.Collapse id="navbar-nav">
-                <Nav className="ms-auto">
-                <Nav.Link href="#logout">Logout</Nav.Link>
-                </Nav>
-            </Navbar.Collapse>
-            </Container>
-        </Navbar>
+        {/* Primary Navbar */}
+        <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 p-3 shadow-sm">
+        <Container fluid>
+          <Navbar.Brand href="#" className="d-flex align-items-center">
+            <img
+              src={`${process.env.PUBLIC_URL}/logo.png`}
+              width="40"
+              height="40"
+              className="d-inline-block align-top me-2"
+              alt="West Texas Cotton Logo"
+            />
+            <span className="navbar-brand-text fs-5 fw-bold">West Texas Cotton</span>
+          </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Brand href="/dashboard">Dashboard</Navbar.Brand>
+          <Navbar.Toggle aria-controls="navbar-nav" />
+          <Navbar.Collapse id="navbar-nav">
+            <Nav className="ms-auto">
+              <Nav.Link href="/logout" className="text-light fw-semibold">Logout</Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
             {/* Tabs Section */}
     <Tabs activeKey={location.pathname.substring(1) || 'crop'} onSelect={handleTabSelect} className="mb-3">
      <Tab eventKey="project" title="Project">
@@ -121,61 +120,79 @@ export default function CropForm() {
       </div>
     </Tab>
     <Tab eventKey="crop" title="Crop">
-                    <div className="form-section">
-      <h2>Manage Crops</h2>
-      <Form onSubmit={handleSubmit}>
-        <Row className="align-items-center mb-3">
-          <Col md={8}>
-            <Form.Group controlId="formCropName">
-              <Form.Label>Crop Name</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter crop name"
-                value={cropName}
-                onChange={handleChange}
-              />
-            </Form.Group>
-          </Col>
-          <Col md={4} className="d-flex">
-            <Button variant="primary" type="submit" className="me-2">
-              {isEditing ? 'Update Crop' : 'Add Crop'}
-            </Button>
-            {isEditing && (
-              <Button variant="secondary" onClick={handleCancelEdit}>
-                Cancel
-              </Button>
-            )}
-          </Col>
-        </Row>
-      </Form>
-      </div>
-      <h3>Crop List</h3>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Crop Name</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {crops.map((crop) => (
-            <tr key={crop.ID}>
-              <td>{crop.ID}</td>
-              <td>{crop.Name}</td>
-              <td>
-                <Button variant="warning" className="me-2" onClick={() => handleEdit(crop)}>
-                  Edit
-                </Button>
-                <Button variant="danger" onClick={() => handleDelete(crop.id)}>
-                  Delete
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-      </Tab>
+          <Container className="container-custom">
+            <h3 className="header-custom">Manage Crops</h3>
+            <Form onSubmit={handleAddCrop}>
+              <Row className="align-items-center mb-3">
+                <Col md={8}>
+                  <Form.Group controlId="formCropName">
+                    <Form.Label>Crop Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter crop name"
+                      value={newCropName}
+                      onChange={(e) => setNewCropName(e.target.value)}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4} className="d-flex">
+                  <Button variant="primary" type="submit" className="me-2">
+                    Add Crop
+                  </Button>
+                </Col>
+              </Row>
+            </Form>
+            <h3>Crop List</h3>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Crop Name</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {crops.map((crop) => (
+                  <tr key={crop.ID}>
+                    <td>{crop.ID}</td>
+                    <td>
+                      {editRowId === crop.ID ? (
+                        <Form.Control
+                          type="text"
+                          value={editCropName}
+                          onChange={(e) => setEditCropName(e.target.value)}
+                        />
+                      ) : (
+                        crop.Name
+                      )}
+                    </td>
+                    <td>
+                      {editRowId === crop.ID ? (
+                        <>
+                          <Button variant="success" className="me-2" onClick={handleSaveEdit}>
+                            Save
+                          </Button>
+                          <Button variant="secondary" onClick={handleCancelEdit}>
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="warning" className="me-2" onClick={() => handleEdit(crop)}>
+                            Edit
+                          </Button>
+                          <Button variant="danger" onClick={() => handleDelete(crop.ID)}>
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Container>
+        </Tab>
 
     <Tab eventKey="platform" title="Platform">
       <div className="form-section">

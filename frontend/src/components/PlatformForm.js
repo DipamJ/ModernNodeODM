@@ -7,12 +7,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 export default function PlatformForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [platforms, setPlatforms] = useState([]); // State for platform list
-  const [isEditing, setIsEditing] = useState(false); // Edit mode tracking
-  const [currentPlatformId, setCurrentPlatformId] = useState(null); // Current platform being edited
-  const [platformName, setPlatformName] = useState(''); // Platform name input
+  const [platforms, setPlatforms] = useState([]);
+  const [editRowId, setEditRowId] = useState(null);
+  const [editPlatformName, setEditPlatformName] = useState('');
+  const [newPlatformName, setNewPlatformName] = useState('');
 
-  // Fetch platform list on component mount
   useEffect(() => {
     fetchPlatforms();
   }, []);
@@ -20,70 +19,57 @@ export default function PlatformForm() {
   const fetchPlatforms = async () => {
     try {
       const response = await axios.get('http://localhost:5000/platforms');
-      debugger;
-      setPlatforms(response.data); // Set platform list in state
+      setPlatforms(response.data);
     } catch (error) {
       console.error('Error fetching platforms:', error);
     }
   };
 
-  const handleChange = (e) => {
-    setPlatformName(e.target.value); // Update platform name state
-  };
-
-  const handleSubmit = async (e) => {
+  const handleAddPlatform = async (e) => {
     e.preventDefault();
-    if (!platformName) {
-      alert('Platform name cannot be empty');
-      return;
-    }
-
-    if (isEditing) {
-      try {
-        // Update platform
-        await axios.put(`http://localhost:5000/platforms/${currentPlatformId}`, { name: platformName });
-        alert('Platform updated successfully!');
-        setPlatforms((prev) =>
-          prev.map((platform) =>
-            platform.id === currentPlatformId ? { ...platform, Name: platformName } : platform
-          )
-        );
-        setIsEditing(false);
-        setPlatformName('');
-      } catch (error) {
-        console.error('Error updating platform:', error);
-        alert('Failed to update platform.');
-      }
-    } else {
-      try {
-        // Add new platform
-        const response = await axios.post('http://localhost:5000/platforms', { name: platformName });
-        alert('Platform added successfully!');
-        setPlatforms([...platforms, response.data]);
-        setPlatformName('');
-      } catch (error) {
-        console.error('Error adding platform:', error);
-        alert('Failed to add platform.');
-      }
+    try {
+      const response = await axios.post('http://localhost:5000/platforms', { name: newPlatformName });
+      setPlatforms([...platforms, response.data]);
+      setNewPlatformName('');
+      await fetchPlatforms();
+    } catch (error) {
+      console.error('Error adding platform:', error);
+      alert('Failed to add platform.');
     }
   };
 
   const handleEdit = (platform) => {
-    setIsEditing(true);
-    setCurrentPlatformId(platform.id);
-    setPlatformName(platform.Name);
+    setEditRowId(platform.ID);
+    setEditPlatformName(platform.Name);
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`http://localhost:5000/platforms/${editRowId}`, { name: editPlatformName });
+      setPlatforms((prev) =>
+        prev.map((platform) => (platform.ID === editRowId ? { ...platform, Name: editPlatformName } : platform))
+      );
+      setEditRowId(null);
+      setEditPlatformName('');
+      await fetchPlatforms();
+    } catch (error) {
+      console.error('Error updating platform:', error);
+      alert('Failed to update platform.');
+    }
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
-    setPlatformName('');
+    setEditRowId(null);
+    setEditPlatformName('');
   };
 
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/platforms/${id}`);
       alert('Platform deleted successfully!');
-      setPlatforms((prev) => prev.filter((platform) => platform.id !== id));
+      setPlatforms((prev) => prev.filter((platform) => platform.ID !== id));
+      await fetchPlatforms();
     } catch (error) {
       console.error('Error deleting platform:', error);
       alert('Failed to delete platform.');
@@ -96,8 +82,8 @@ export default function PlatformForm() {
 
   return (
     <Container fluid className="mt-4">
-      <Navbar bg="dark" variant="dark" expand="lg" className="mb-0">
-        <Container>
+      <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 p-3 shadow-sm">
+        <Container fluid>
           <Navbar.Brand href="#" className="d-flex align-items-center">
             <img
               src={`${process.env.PUBLIC_URL}/logo.png`}
@@ -106,12 +92,14 @@ export default function PlatformForm() {
               className="d-inline-block align-top me-2"
               alt="West Texas Cotton Logo"
             />
-            <span className="navbar-brand-text">West Texas Cotton</span>
+            <span className="navbar-brand-text fs-5 fw-bold">West Texas Cotton</span>
           </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Brand href="/dashboard">Dashboard</Navbar.Brand>
           <Navbar.Toggle aria-controls="navbar-nav" />
           <Navbar.Collapse id="navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link href="#logout">Logout</Nav.Link>
+              <Nav.Link href="/logout" className="text-light fw-semibold">Logout</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -128,11 +116,10 @@ export default function PlatformForm() {
             <h2>Crop Management</h2>
           </div>
         </Tab>
-
         <Tab eventKey="platform" title="Platform">
-          <div className="form-section">
-            <h2>Manage Platforms</h2>
-            <Form onSubmit={handleSubmit}>
+          <Container className="container-custom">
+            <h3 className="header-custom">Manage Platforms</h3>
+            <Form onSubmit={handleAddPlatform}>
               <Row className="align-items-center mb-3">
                 <Col md={8}>
                   <Form.Group controlId="formPlatformName">
@@ -140,51 +127,68 @@ export default function PlatformForm() {
                     <Form.Control
                       type="text"
                       placeholder="Enter platform name"
-                      value={platformName}
-                      onChange={handleChange}
+                      value={newPlatformName}
+                      onChange={(e) => setNewPlatformName(e.target.value)}
                     />
                   </Form.Group>
                 </Col>
                 <Col md={4} className="d-flex">
                   <Button variant="primary" type="submit" className="me-2">
-                    {isEditing ? 'Update Platform' : 'Add Platform'}
+                    Add Platform
                   </Button>
-                  {isEditing && (
-                    <Button variant="secondary" onClick={handleCancelEdit}>
-                      Cancel
-                    </Button>
-                  )}
                 </Col>
               </Row>
             </Form>
-          </div>
-
-          <h3>Platform List</h3>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Platform Name</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {platforms.map((platform) => (
-                <tr key={platform.ID}>
-                  <td>{platform.ID}</td>
-                  <td>{platform.Name}</td>
-                  <td>
-                    <Button variant="warning" className="me-2" onClick={() => handleEdit(platform)}>
-                      Edit
-                    </Button>
-                    <Button variant="danger" onClick={() => handleDelete(platform.id)}>
-                      Delete
-                    </Button>
-                  </td>
+            <h3 className="header-custom">Platform List</h3>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Platform Name</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {platforms.map((platform) => (
+                  <tr key={platform.ID}>
+                    <td>{platform.ID}</td>
+                    <td>
+                      {editRowId === platform.ID ? (
+                        <Form.Control
+                          type="text"
+                          value={editPlatformName}
+                          onChange={(e) => setEditPlatformName(e.target.value)}
+                        />
+                      ) : (
+                        platform.Name
+                      )}
+                    </td>
+                    <td>
+                      {editRowId === platform.ID ? (
+                        <>
+                          <Button variant="success" className="me-2" onClick={handleSaveEdit}>
+                            Save
+                          </Button>
+                          <Button variant="secondary" onClick={handleCancelEdit}>
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="warning" className="me-2" onClick={() => handleEdit(platform)}>
+                            Edit
+                          </Button>
+                          <Button variant="danger" onClick={() => handleDelete(platform.ID)}>
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Container>
         </Tab>
         <Tab eventKey="sensor" title="Sensor">
       <div className="form-section">

@@ -1,13 +1,46 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
+from datetime import timedelta
 from models.project_model import get_all_projects, add_project, update_project, delete_project
 from models.crop_model import get_all_crops, add_crop, update_crop, delete_crop
 from models.platform_model import get_all_platforms, add_platform, update_platform, delete_platform
 from models.sensor_model import get_all_sensors, add_sensor, update_sensor, delete_sensor
-
+from models.flight_model import get_all_flights, add_flight, update_flight, delete_flight
+from models.productType_model import get_all_product_types, add_product_type, update_product_type, delete_product_type
+from models.user_model import get_user_by_email
 
 app = Flask(__name__)
-CORS(app)  # Enable cross-origin requests
+app.secret_key = 'super_secret_key'  # Replace with a secure key
+app.permanent_session_lifetime = timedelta(minutes=30)  # Session timeout
+CORS(app, supports_credentials=True)  # Enable cross-origin requests with credentials
+
+# Login route
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email')
+
+    user = get_user_by_email(email)
+    if user and user['password'] == data.get('password'):
+        session['user'] = email  # Store user session
+        print("Login Successful")
+        return jsonify({'message': 'Login successful', 'user': email}), 200
+    else:
+        print("Login Unsuccessful")
+        return jsonify({'message': 'Invalid email Id or password'}), 401
+
+# Logout route
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user', None)  # Clear the user session
+    return jsonify({'message': 'Logged out successfully'}), 200
+
+# Authentication check route
+# @app.route('/check-auth', methods=['GET'])
+# def check_auth():
+#     if 'user' in session:
+#         return jsonify({'authenticated': True}), 200
+#     return jsonify({'authenticated': False}), 401
 
 projects = []
 
@@ -170,6 +203,79 @@ def remove_sensor(id):
     except Exception as e:
         print(f"Error deleting sensor: {e}")
         return jsonify({'error': str(e)}), 500
+    
+flights = []
+
+@app.route('/flights', methods=['POST'])
+def create_flight():
+    data = request.get_json()
+    print("Received Data:", data)
+
+    try:
+        add_flight(data)  # This refers to the function in project_model.py
+        return jsonify({'message': 'Flight added successfully'}), 201
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Log the error for debugging
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/flights', methods=['GET'])
+def get_flights():
+    try:
+        flights = get_all_flights()
+        print("Flights : ", flights)
+        return jsonify(flights), 200
+    except Exception as e:
+        print(f"Error fetching flights: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/flights/<int:id>', methods=['PUT'])
+def modify_flight(id):
+    data = request.json
+    print("Data : ", data)
+    update_flight(id, data['name'], data['date'], data['project'], data['platform'], data['sensor'], data['altitude'], data['forward'], data['side'])
+    return jsonify({'message': 'Flight updated successfully!'})
+
+@app.route('/flights/<int:id>', methods=['DELETE'])
+def remove_flight(id):
+    delete_flight(id)
+    return jsonify({'message': 'Flight deleted successfully!'})
+
+product_types = []
+
+@app.route('/product-types', methods=['POST'])
+def create_product_type():
+    data = request.get_json()
+    print("Received Data for Product Type:", data)
+
+    try:
+        add_product_type(data)  # This refers to the function in project_model.py or a similar module
+        return jsonify({'message': 'Product type added successfully'}), 201
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Log the error for debugging
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/product-types', methods=['GET'])
+def get_product_types():
+    try:
+        product_types = get_all_product_types()
+        print("Product Types:", product_types)
+        return jsonify(product_types), 200
+    except Exception as e:
+        print(f"Error fetching product types: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/product-types/<int:id>', methods=['PUT'])
+def modify_product_type(id):
+    data = request.json
+    print("Data for Product Type Update:", data)
+    update_product_type(id, data['name'], data['type'])
+    return jsonify({'message': 'Product type updated successfully!'})
+
+@app.route('/product-types/<int:id>', methods=['DELETE'])
+def remove_product_type(id):
+    delete_product_type(id)
+    return jsonify({'message': 'Product type deleted successfully!'})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -8,10 +8,9 @@ export default function SensorForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sensors, setSensors] = useState([]); // State for sensor list
-  const [isEditing, setIsEditing] = useState(false); // Edit mode tracking
-  const [currentSensorId, setCurrentSensorId] = useState(null); // Current sensor being edited
-  const [sensorName, setSensorName] = useState(''); // Sensor name input
-
+  const [newSensorName, setNewSensorName] = useState(''); // Sensor name input
+  const [editSensorName, setEditSensorName] = useState('');
+  const [editRowId, setEditRowId] = useState(null);
   // Fetch sensor list on component mount
   useEffect(() => {
     fetchSensors();
@@ -26,61 +25,62 @@ export default function SensorForm() {
     }
   };
 
-  const handleChange = (e) => {
-    setSensorName(e.target.value); // Update sensor name state
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!sensorName) {
+    if (!newSensorName) {
       alert('Sensor name cannot be empty');
       return;
     }
-
-    if (isEditing) {
-      try {
-        await axios.put(`http://localhost:5000/sensors/${currentSensorId}`, { name: sensorName });
-        alert('Sensor updated successfully!');
-        setSensors((prev) =>
-          prev.map((sensor) =>
-            sensor.id === currentSensorId ? { ...sensor, Name: sensorName } : sensor
-          )
-        );
-        setIsEditing(false);
-        setSensorName('');
-      } catch (error) {
-        console.error('Error updating sensor:', error);
-        alert('Failed to update sensor.');
-      }
-    } else {
-      try {
-        const response = await axios.post('http://localhost:5000/sensors', { name: sensorName });
-        alert('Sensor added successfully!');
-        setSensors([...sensors, response.data]);
-        setSensorName('');
-      } catch (error) {
-        console.error('Error adding sensor:', error);
-        alert('Failed to add sensor.');
-      }
+    try {
+      const response = await axios.post('http://localhost:5000/sensors', { name: newSensorName });
+      alert('Sensor added successfully!');
+      setSensors([...sensors, response.data]);
+      setNewSensorName('');
+      await fetchSensors();
+    } catch (error) {
+      console.error('Error adding sensor:', error);
+      alert('Failed to add sensor.');
     }
   };
 
   const handleEdit = (sensor) => {
-    setIsEditing(true);
-    setCurrentSensorId(sensor.id);
-    setSensorName(sensor.Name);
+    // setIsEditing(true);
+    setEditRowId(sensor.ID);
+    setEditSensorName(sensor.Name);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editSensorName) {
+      alert('Sensor name cannot be empty');
+      return;
+    }
+    try {
+      await axios.put(`http://localhost:5000/sensors/${editRowId}`, { name: editSensorName });
+      setSensors((prev) =>
+        prev.map((sensor) =>
+          sensor.ID === editRowId ? { ...sensor, Name: editSensorName } : sensor
+        )
+      );
+      setEditRowId(null);
+      setEditSensorName('');
+      await fetchSensors();
+    } catch (error) {
+      console.error('Error updating sensor:', error);
+      alert('Failed to update sensor.');
+    }
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
-    setSensorName('');
+    setEditRowId(null);
+    setEditSensorName('');
   };
 
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/sensors/${id}`);
       alert('Sensor deleted successfully!');
-      setSensors((prev) => prev.filter((sensor) => sensor.id !== id));
+      setSensors((prev) => prev.filter((sensor) => sensor.ID !== id));
+      await fetchSensors();
     } catch (error) {
       console.error('Error deleting sensor:', error);
       alert('Failed to delete sensor.');
@@ -93,8 +93,8 @@ export default function SensorForm() {
 
   return (
     <Container fluid className="mt-4">
-      <Navbar bg="dark" variant="dark" expand="lg" className="mb-0">
-        <Container>
+      <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 p-3 shadow-sm">
+        <Container fluid>
           <Navbar.Brand href="#" className="d-flex align-items-center">
             <img
               src={`${process.env.PUBLIC_URL}/logo.png`}
@@ -103,12 +103,14 @@ export default function SensorForm() {
               className="d-inline-block align-top me-2"
               alt="West Texas Cotton Logo"
             />
-            <span className="navbar-brand-text">West Texas Cotton</span>
+            <span className="navbar-brand-text fs-5 fw-bold">West Texas Cotton</span>
           </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Brand href="/dashboard">Dashboard</Navbar.Brand>
           <Navbar.Toggle aria-controls="navbar-nav" />
           <Navbar.Collapse id="navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link href="#logout">Logout</Nav.Link>
+              <Nav.Link href="/logout" className="text-light fw-semibold">Logout</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -131,8 +133,8 @@ export default function SensorForm() {
       </div>
     </Tab>
         <Tab eventKey="sensor" title="Sensor">
-          <div className="form-section">
-            <h2>Manage Sensors</h2>
+        <Container className="container-custom">
+        <h3 className="header-custom">Manage Sensors</h3>
             <Form onSubmit={handleSubmit}>
               <Row className="align-items-center mb-3">
                 <Col md={8}>
@@ -141,25 +143,18 @@ export default function SensorForm() {
                     <Form.Control
                       type="text"
                       placeholder="Enter sensor name"
-                      value={sensorName}
-                      onChange={handleChange}
+                      value={newSensorName}
+                      onChange={(e) => setNewSensorName(e.target.value)}
                     />
                   </Form.Group>
                 </Col>
                 <Col md={4} className="d-flex">
                   <Button variant="primary" type="submit" className="me-2">
-                    {isEditing ? 'Update Sensor' : 'Add Sensor'}
+                    Add Sensor
                   </Button>
-                  {isEditing && (
-                    <Button variant="secondary" onClick={handleCancelEdit}>
-                      Cancel
-                    </Button>
-                  )}
                 </Col>
               </Row>
             </Form>
-          </div>
-
           <h3>Sensor List</h3>
           <Table striped bordered hover>
             <thead>
@@ -173,19 +168,57 @@ export default function SensorForm() {
               {sensors.map((sensor) => (
                 <tr key={sensor.ID}>
                   <td>{sensor.ID}</td>
-                  <td>{sensor.Name}</td>
                   <td>
-                    <Button variant="warning" className="me-2" onClick={() => handleEdit(sensor)}>
-                      Edit
-                    </Button>
-                    <Button variant="danger" onClick={() => handleDelete(sensor.id)}>
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                      {editRowId === sensor.ID ? (
+                        <Form.Control
+                          type="text"
+                          value={editSensorName}
+                          onChange={(e) => setEditSensorName(e.target.value)}
+                        />
+                      ) : (
+                        sensor.Name
+                      )}
+                    </td>
+                    <td>
+                      {editRowId === sensor.ID ? (
+                        <>
+                          <Button
+                            variant="success"
+                            className="me-2"
+                            onClick={handleSaveEdit}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={handleCancelEdit}
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="warning"
+                            className="me-2"
+                            onClick={() => handleEdit(sensor)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="danger"
+                            onClick={() => handleDelete(sensor.ID)}
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
           </Table>
+          </Container>
         </Tab>
         <Tab eventKey="flight" title="Flight">
       <div className="form-section">

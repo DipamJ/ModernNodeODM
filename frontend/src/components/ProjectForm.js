@@ -21,15 +21,16 @@ export default function ProjectForm() {
       maxZoom: '', defaultZoom: '', visualizationPage: ''
   });
 
+  const fetchProjects = async () => {
+    try {
+        const response = await axios.get('http://localhost:5000/projects');
+        setProjects(response.data); // Set the fetched projects to state
+    } catch (error) {
+        console.error('Error fetching projects:', error);
+    }
+};
+
   useEffect(() => {
-    const fetchProjects = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/projects');
-            setProjects(response.data); // Set the fetched projects to state
-        } catch (error) {
-            console.error('Error fetching projects:', error);
-        }
-    };
     fetchProjects();
 }, []);
 
@@ -39,15 +40,10 @@ export default function ProjectForm() {
     };
 
     const validateForm = () => {
-      // Validation Rules Based on Schema
       if (project.name.length > 1000) {
           alert('Project Name cannot exceed 1000 characters.');
           return false;
       }
-      // if (project.crop === '' || isNaN(project.crop)) {
-      //     alert('Crop must be a valid integer.');
-      //     return false;
-      // }
       if (project.minZoom < 0 || project.maxZoom < 0 || project.defaultZoom < 0) {
           alert('Zoom values must be positive integers.');
           return false;
@@ -87,8 +83,9 @@ export default function ProjectForm() {
         const response = await axios.post('http://localhost:5000/projects', projectData);  // Corrected the route
         console.log('Project Added:', response.data);
         alert('Project added successfully!');
-        setProjects([...projects, response.data]);
+        setProjects((prevProjects) => [...prevProjects, response.data]);
         resetProjectForm();
+        await fetchProjects();
     } catch (error) {
         console.error('Error adding project:', error);
         alert('Failed to add project. Check console for details.');
@@ -118,26 +115,12 @@ export default function ProjectForm() {
         prev.map((p) => (p.ID === proj.ID ? { ...p, ...updatedProject } : p))
       );
       setEditRowId(null); // Exit edit mode
+      await fetchProjects();
     } catch (error) {
       console.error('Error updating project:', error);
       alert('Failed to update project. Check console for details.');
     }
   };
-
-// const handleEdit = (proj) => {
-//   setProject(proj);
-//   setIsEditing(true);
-//   setCurrentProjectId(proj.ID);
-// };
-
-const handleCancelEdit = () => {
-  setIsEditing(false);
-  setProject({
-      name: '', crop: '', plantingDate: '', harvestDate: '',
-      description: '', centerLat: '', centerLng: '', minZoom: '',
-      maxZoom: '', defaultZoom: '', visualizationPage: ''
-  });
-};
 
 const handleEditChange = (e, field) => {
     const { value } = e.target;
@@ -172,6 +155,7 @@ const handleEditChange = (e, field) => {
       await axios.delete(`http://localhost:5000/projects/${id}`);
       alert('Project deleted successfully!');
       setProjects((prev) => prev.filter((proj) => proj.ID !== id));
+      await fetchProjects();
     } catch (error) {
       console.error('Error deleting project:', error);
       alert('Failed to delete project. Check console for details.');
@@ -185,26 +169,28 @@ const handleEditChange = (e, field) => {
     return (
         <Container fluid className="mt-4">
         {/* Primary Navbar */}
-        <Navbar bg="dark" variant="dark" expand="lg" className="mb-0">
-            <Container>
-            <Navbar.Brand href="#" className="d-flex align-items-center">
-                <img
-                src={`${process.env.PUBLIC_URL}/logo.png`}
-                width="40"
-                height="40"
-                className="d-inline-block align-top me-2"
-                alt="West Texas Cotton Logo"
-                />
-                <span className="navbar-brand-text">West Texas Cotton</span>
-            </Navbar.Brand>
-            <Navbar.Toggle aria-controls="navbar-nav" />
-            <Navbar.Collapse id="navbar-nav">
-                <Nav className="ms-auto">
-                <Nav.Link href="#logout">Logout</Nav.Link>
-                </Nav>
-            </Navbar.Collapse>
-            </Container>
-        </Navbar>
+        <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 p-3 shadow-sm">
+        <Container fluid>
+          <Navbar.Brand href="/#" className="d-flex align-items-center">
+            <img
+              src={`${process.env.PUBLIC_URL}/logo.png`}
+              width="40"
+              height="40"
+              className="d-inline-block align-top me-2"
+              alt="West Texas Cotton Logo"
+            />
+            <span className="navbar-brand-text fs-5 fw-bold">West Texas Cotton</span>
+          </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Brand href="/dashboard">Dashboard</Navbar.Brand>
+          <Navbar.Toggle aria-controls="navbar-nav" />
+          <Navbar.Collapse id="navbar-nav">
+            <Nav className="ms-auto">
+              <Nav.Link href="/logout" className="text-light fw-semibold">Logout</Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
             {/* Tabs Section */}
             {/* <Tabs defaultActiveKey="project" className="mb-3"> */}
             <Tabs
@@ -213,8 +199,8 @@ const handleEditChange = (e, field) => {
         className="mb-3"
       >
                 <Tab eventKey="project" title="Project">
-                    <div className="form-section">
-                        <h2>Add Project</h2>
+                <Container className="container-custom">
+                <h3 className="header-custom">Add Project</h3>
                         <Form onSubmit={handleSubmit}>
                             <Row>
                                 <Col md={6}>
@@ -367,7 +353,6 @@ const handleEditChange = (e, field) => {
                                Add Project
                             </Button>
                         </Form>
-                    </div>
                     <h3 className="mt-5">Project List</h3>
       <Table striped bordered hover className="mt-3">
         <thead>
@@ -476,6 +461,7 @@ const handleEditChange = (e, field) => {
               ))}
             </tbody>
           </Table>
+          </Container>
                 </Tab>
       <Tab eventKey="crop" title="Crop">
       <div className="form-section">
