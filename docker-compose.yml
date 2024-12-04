@@ -29,6 +29,7 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     environment:
       - REACT_APP_API_URL=http://backend:5000  # Refers to backend by its service name
       - CHOKIDAR_USEPOLLING=true
