@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: <your_dockerhub_username>/modernnodeodm-backend:latest
+    image: dipamj/modernnodeodm-backend:latest
     ports:
       - "5000:5000"
     depends_on:
@@ -15,14 +15,14 @@ services:
       - DB_NAME=mydb
 
   frontend:
-    image: <your_dockerhub_username>/modernnodeodm-frontend:latest
+    image: dipamj/modernnodeodm-frontend:latest
     ports:
       - "3000:3000"
     depends_on:
       - backend
 
   db:
-    image: <your_dockerhub_username>/modernnodeodm-db:latest
+    image: dipamj/modernnodeodm-db:latest
     ports:
       - "3306:3306"
     environment:
