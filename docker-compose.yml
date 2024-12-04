@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   backend:
     build:
@@ -10,22 +12,42 @@ services:
     environment:
       - FLASK_ENV=development
       - PYTHONPATH=/app
-      - DB_HOST=host.docker.internal  # Points to the host machine
+      - DB_HOST=db  # Refers to the MySQL service by its container name
       - DB_USER=root
-      - DB_PASSWORD=Winter.123
+      - DB_PASSWORD=password
       - DB_NAME=mydb
       - DB_PORT=3306
-    working_dir: /app
-    command: flask run --host=0.0.0.0 --port=5000
+    depends_on:
+      - db  # Ensures the database is up before backend starts
+    command: sh -c "until nc -z db 3306; do sleep 5; done && flask run --host=0.0.0.0 --port=5000"
 
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
     environment:
+      - REACT_APP_API_URL=http://backend:5000  # Refers to backend by its service name
       - CHOKIDAR_USEPOLLING=true
     depends_on:
-      - backend
+      - backend  # Ensures the backend is up before frontend starts
+
+  db:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db-dump.sql:/docker-entrypoint-initdb.d/db-dump.sql  # Mounts the directory with the SQL dump
+    command: --default-authentication-plugin=mysql_native_password  # Ensures compatibility with some clients
+
+volumes:
+  db_data:

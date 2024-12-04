@@ -7,8 +7,11 @@ WORKDIR /app
 # Copy the current directory contents into the container
 COPY . .
 
-# Install the dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install netcat and any other dependencies
+RUN apt-get update && \
+    apt-get install -y netcat-openbsd && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set PYTHONPATH to /app
 ENV PYTHONPATH=/app
