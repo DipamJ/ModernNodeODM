@@ -43,7 +43,7 @@ def update_flight(id, name, date, project, platform, sensor, altitude, forward, 
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(
-        "UPDATE flight SET name=%s, Date=%s, Project=%s, Platform=%s, Sensor=%s, Altitude=%s, Forward=%s, Side=%s WHERE id=%s",
+        "UPDATE flight SET name=%s, date=%s, project=%s, platform=%s, sensor=%s, altitude=%s, forward=%s, side=%s WHERE id_flight=%s",
         (name, date, project, platform, sensor, altitude, forward, side, id)
     )
     connection.commit()
@@ -52,6 +52,6 @@ def update_flight(id, name, date, project, platform, sensor, altitude, forward, 
 def delete_flight(id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM flight WHERE id = %s", (id,))
+    cursor.execute("DELETE FROM flight WHERE id_flight = %s", (id,))
     connection.commit()
     connection.close()

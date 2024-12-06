@@ -5,7 +5,7 @@ def get_all_platforms():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM platform ORDER BY Name")
+        cursor.execute("SELECT * FROM platform ORDER BY name")
         platforms = cursor.fetchall()
         conn.close()
         return platforms
@@ -18,7 +18,7 @@ def add_platform(name):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO platform (Name) VALUES (%s)", (name,))
+        cursor.execute("INSERT INTO platform (name) VALUES (%s)", (name,))
         conn.commit()
         print(f"Platform '{name}' added successfully.")
     except Exception as e:
@@ -32,7 +32,7 @@ def update_platform(id, name):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE platform SET Name = %s WHERE id = %s", (name, id))
+        cursor.execute("UPDATE platform SET name = %s WHERE id_platform = %s", (name, id))
         conn.commit()
         print(f"Platform with ID {id} updated to '{name}'.")
     except Exception as e:
@@ -46,7 +46,7 @@ def delete_platform(id):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM platform WHERE id = %s", (id,))
+        cursor.execute("DELETE FROM platform WHERE id_platform = %s", (id,))
         conn.commit()
         print(f"Platform with ID {id} deleted.")
     except Exception as e:

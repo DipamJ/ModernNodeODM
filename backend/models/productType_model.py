@@ -36,7 +36,7 @@ def update_product_type(id, name, type):
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(
-        "UPDATE product_type SET name=%s, type=%s WHERE id=%s",
+        "UPDATE product_type SET name=%s, type=%s WHERE id_product_type=%s",
         (name, type, id)
     )
     connection.commit()
@@ -45,6 +45,6 @@ def update_product_type(id, name, type):
 def delete_product_type(id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM product_type WHERE id = %s", (id,))
+    cursor.execute("DELETE FROM product_type WHERE id_product_type = %s", (id,))
     connection.commit()
     connection.close()
