@@ -4,7 +4,7 @@ def get_all_crops():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM crop ORDER BY Name")
+        cursor.execute("SELECT * FROM crop ORDER BY name")
         crops = cursor.fetchall()
         conn.close()
         return crops
@@ -16,7 +16,7 @@ def add_crop(name):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO crop (Name) VALUES (%s)", (name,))
+        cursor.execute("INSERT INTO crop (name) VALUES (%s)", (name,))
         conn.commit()
         print(f"Crop '{name}' added successfully.")
     except Exception as e:
@@ -29,7 +29,7 @@ def update_crop(id, name):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE crop SET Name = %s WHERE id = %s", (name, id))
+        cursor.execute("UPDATE crop SET name = %s WHERE id_crop = %s", (name, id))
         conn.commit()
         print(f"Crop with ID {id} updated to '{name}'.")
     except Exception as e:
@@ -42,7 +42,7 @@ def delete_crop(id):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM crop WHERE id = %s", (id,))
+        cursor.execute("DELETE FROM crop WHERE id_crop = %s", (id,))
         conn.commit()
         print(f"Crop with ID {id} deleted.")
     except Exception as e:

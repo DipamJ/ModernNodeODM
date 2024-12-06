@@ -16,7 +16,7 @@ def add_project(data):
     conn = get_db_connection()
     cursor = conn.cursor()
     query = """
-        INSERT INTO project (name, crop, plantingDate, harvestDate, description, centerLat, centerLng, minZoom, maxZoom, defaultZoom, visualizationPage)
+        INSERT INTO project (name, crop, planting_date, harvest_date, description, center_lattitude, center_longitude, min_zoom, max_zoom, default_zoom, visualization_page)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
@@ -46,7 +46,7 @@ def update_project(id, name, plantingDate, harvestDate, description):
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(
-        "UPDATE project SET Name=%s, PlantingDate=%s, HarvestDate=%s, Description=%s WHERE id=%s",
+        "UPDATE project SET name=%s, planting_date=%s, harvest_date=%s, description=%s WHERE id_project=%s",
         (name, plantingDate, harvestDate, description, id)
     )
     connection.commit()
@@ -55,6 +55,6 @@ def update_project(id, name, plantingDate, harvestDate, description):
 def delete_project(id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM project WHERE id = %s", (id,))
+    cursor.execute("DELETE FROM project WHERE id_project = %s", (id,))
     connection.commit()
     connection.close()
