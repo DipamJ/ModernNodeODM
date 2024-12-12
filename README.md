@@ -15,3 +15,4 @@
 5. Access the Application:
    i. Frontend: http://localhost:3000
    ii. Backend: http://localhost:5000
+6. User credentials: email: test@gmail.com ; password: test123
