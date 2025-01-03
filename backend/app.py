@@ -7,7 +7,8 @@ from models.platform_model import get_all_platforms, add_platform, update_platfo
 from models.sensor_model import get_all_sensors, add_sensor, update_sensor, delete_sensor
 from models.flight_model import get_all_flights, add_flight, update_flight, delete_flight
 from models.productType_model import get_all_product_types, add_product_type, update_product_type, delete_product_type
-from models.user_model import get_user_by_email
+from models.user_model import get_user_by_email, register_user, get_all_users, update_user_approval, assign_role_to_user, delete_user_by_id
+from models.role_model import get_all_roles, add_role, update_role, delete_role
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'  # Replace with a secure key
@@ -28,6 +29,25 @@ def login():
     else:
         print("Login Unsuccessful")
         return jsonify({'message': 'Invalid email Id or password'}), 401
+
+# Register route
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+
+        # Check if the email already exists
+        if get_user_by_email(email):
+            return jsonify({'message': 'Email already registered'}), 408
+
+        # Create user
+        register_user(data)
+        return jsonify({'message': 'Registration successful'}), 201
+    except Exception as e:
+        print(f"Error in registration: {e}")
+        return jsonify({'message': 'An error occurred during registration'}), 500
+
 
 # Logout route
 @app.route('/logout', methods=['POST'])
@@ -276,6 +296,97 @@ def remove_product_type(id):
     delete_product_type(id)
     return jsonify({'message': 'Product type deleted successfully!'})
 
+@app.route('/roles', methods=['GET'])
+def get_roles():
+    try:
+        roles = get_all_roles()
+        return jsonify({'roles': roles}), 200
+    except Exception as e:
+        print(f"Error fetching roles: {e}")
+        return jsonify({'error': 'Failed to fetch roles'}), 500
+
+@app.route('/roles', methods=['POST'])
+def create_role():
+    data = request.get_json()
+    role_name = data.get('name')
+    if not role_name:
+        return jsonify({'message': 'Role name is required'}), 400
+    try:
+        add_role(role_name)
+        return jsonify({'message': 'Role added successfully'}), 201
+    except Exception as e:
+        print(f"Error adding role: {e}")
+        return jsonify({'error': 'Failed to add role'}), 500
+
+@app.route('/roles/<int:role_id>', methods=['PUT'])
+def modify_role(role_id):
+    data = request.get_json()
+    role_name = data.get('name')
+    if not role_name:
+        return jsonify({'message': 'Role name is required'}), 400
+    try:
+        update_role(role_id, role_name)
+        return jsonify({'message': 'Role updated successfully'}), 200
+    except Exception as e:
+        print(f"Error updating role: {e}")
+        return jsonify({'error': 'Failed to update role'}), 500
+
+@app.route('/roles/<int:role_id>', methods=['DELETE'])
+def remove_role(role_id):
+    try:
+        delete_role(role_id)
+        return jsonify({'message': 'Role deleted successfully'}), 200
+    except Exception as e:
+        print(f"Error deleting role: {e}")
+        return jsonify({'error': 'Failed to delete role'}), 500
+    
+# Fetch all users
+@app.route('/users', methods=['GET'])
+def get_users():
+    try:
+        users = get_all_users()
+        return jsonify({'users': users}), 200
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Update approval status
+@app.route('/users/<int:user_id>/approval', methods=['PUT'])
+def update_approval(user_id):
+    data = request.get_json()
+    status = data.get('status')
+
+    if status not in ['Approved', 'Disapproved']:
+        return jsonify({'message': 'Invalid approval status'}), 400
+
+    if update_user_approval(user_id, status):
+        return jsonify({'message': 'Approval status updated successfully'}), 200
+    else:
+        return jsonify({'message': 'Failed to update approval status'}), 500
+
+# Assign role to user
+@app.route('/users/<int:user_id>/role', methods=['PUT'])
+def assign_role(user_id):
+    data = request.get_json()
+    role_id = data.get('roleId')
+
+    if not role_id:
+        return jsonify({'message': 'Role ID is required'}), 400
+
+    if assign_role_to_user(user_id, role_id):
+        return jsonify({'message': 'Role assigned successfully'}), 200
+    else:
+        return jsonify({'message': 'Failed to assign role'}), 500
+    
+@app.route('/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    try:
+        # Call the model function to delete the user
+        delete_user_by_id(user_id)
+        return jsonify({'message': f'User with ID {user_id} deleted successfully!'}), 200
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        return jsonify({'error': f"Failed to delete user: {e}"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

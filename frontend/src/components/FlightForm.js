@@ -87,16 +87,16 @@ export default function FlightForm() {
   };
 
   const handleEdit = (flight) => {
-    setEditRowId(flight.ID);
+    setEditRowId(flight.id_flight);
     setEditFlight({
-      name: flight.Name,
-      date: flight.Date,
-      altitude: flight.Altitude,
-      forward: flight.Forward,
-      side: flight.Side,
-      project: flight.Project,
-      platform: flight.Platform,
-      sensor: flight.Sensor,
+      name: flight.name,
+      date: flight.date,
+      altitude: flight.altitude,
+      forward: flight.forward,
+      side: flight.side,
+      project: flight.project,
+      platform: flight.platform,
+      sensor: flight.sensor,
     });
   };
 
@@ -105,7 +105,7 @@ export default function FlightForm() {
       await axios.put(`http://localhost:5000/flights/${editRowId}`, editFlight);
       setFlights((prev) =>
         prev.map((flight) =>
-          flight.ID === editRowId ? { ...flight, ...editFlight } : flight
+          flight.id_flight === editRowId ? { ...flight, ...editFlight } : flight
         )
       );
       setEditRowId(null);
@@ -126,7 +126,7 @@ export default function FlightForm() {
   const handleDeleteFlight = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/flights/${id}`);
-      setFlights(flights.filter((flight) => flight.ID !== id));
+      setFlights(flights.filter((flight) => flight.id_flight !== id));
       alert('Flight deleted successfully!');
       await handleSearch();
     } catch (error) {
@@ -321,23 +321,23 @@ export default function FlightForm() {
           </thead>
           <tbody>
             {flights.map((flight) => (
-              <tr key={flight.ID}>
+              <tr key={flight.id_flight}>
                 {/* Flight Name */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Control
                       type="text"
                       value={editFlight.name}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, name: e.target.value }))}
                     />
                   ) : (
-                    flight.Name
+                    flight.name
                   )}
                 </td>
 
                 {/* Project */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Select
                       value={editFlight.project}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, project: e.target.value }))}
@@ -350,13 +350,13 @@ export default function FlightForm() {
                       ))}
                     </Form.Select>
                   ) : (
-                    flight.Project
+                    flight.project
                   )}
                 </td>
 
                 {/* Platform */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Select
                       value={editFlight.platform}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, platform: e.target.value }))}
@@ -369,13 +369,13 @@ export default function FlightForm() {
                       ))}
                     </Form.Select>
                   ) : (
-                    flight.Platform
+                    flight.platform
                   )}
                 </td>
 
                 {/* Sensor */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Select
                       value={editFlight.sensor}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, sensor: e.target.value }))}
@@ -388,65 +388,65 @@ export default function FlightForm() {
                       ))}
                     </Form.Select>
                   ) : (
-                    flight.Sensor
+                    flight.sensor
                   )}
                 </td>
 
                 {/* Date */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Control
                       type="date"
                       value={editFlight.date}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, date: e.target.value }))}
                     />
                   ) : (
-                    flight.Date
+                    flight.date
                   )}
                 </td>
 
                 {/* Altitude */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Control
                       type="number"
                       value={editFlight.altitude}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, altitude: e.target.value }))}
                     />
                   ) : (
-                    flight.Altitude
+                    flight.altitude
                   )}
                 </td>
 
                 {/* Forward Overlap */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Control
                       type="number"
                       value={editFlight.forward}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, forward: e.target.value }))}
                     />
                   ) : (
-                    flight.Forward
+                    flight.forward
                   )}
                 </td>
 
                 {/* Side Overlap */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <Form.Control
                       type="number"
                       value={editFlight.side}
                       onChange={(e) => setEditFlight((prev) => ({ ...prev, side: e.target.value }))}
                     />
                   ) : (
-                    flight.Side
+                    flight.side
                   )}
                 </td>
 
                 {/* Actions */}
                 <td>
-                  {editRowId === flight.ID ? (
+                  {editRowId === flight.id_flight ? (
                     <>
                       <Button variant="success" className="me-2" onClick={handleSaveEdit}>
                         Save
@@ -466,7 +466,7 @@ export default function FlightForm() {
                       </Button>
                       <Button
                         variant="danger"
-                        onClick={() => handleDeleteFlight(flight.ID)}
+                        onClick={() => handleDeleteFlight(flight.id_flight)}
                       >
                         Delete
                       </Button>
