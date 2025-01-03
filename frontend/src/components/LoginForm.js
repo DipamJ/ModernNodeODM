@@ -20,6 +20,10 @@ export default function LoginForm() {
     }
   };
 
+  const handleSignUp = () => {
+    navigate('/register'); // Redirect to the Sign-Up page
+  };
+
   return (
     <Container className="mt-5">
       <Row className="justify-content-center">
@@ -45,9 +49,14 @@ export default function LoginForm() {
                 required
               />
             </Form.Group>
-            <Button variant="primary" type="submit">
-              Login
-            </Button>
+            <div className="d-flex justify-content-between">
+              <Button variant="primary" type="submit">
+                Login
+              </Button>
+              <Button variant="secondary" onClick={handleSignUp}>
+                Register
+              </Button>
+            </div>
           </Form>
         </Col>
       </Row>

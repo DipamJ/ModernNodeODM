@@ -190,7 +190,7 @@ const handleEditChange = (e, field) => {
             </Nav>
           </Navbar.Collapse>
         </Container>
-      </Navbar>
+        </Navbar>
             {/* Tabs Section */}
             {/* <Tabs defaultActiveKey="project" className="mb-3"> */}
             <Tabs

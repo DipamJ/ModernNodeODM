@@ -6,11 +6,20 @@ import './Dashboard.css';
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  const handleSelectTool = (eventKey) => {
+  const handleSelectEssentialTools = (eventKey) => {
     if (eventKey === 'data-admin') {
       navigate('/project');  // Navigate to the Project page
     }
     // Add additional tool navigation here if needed
+  };
+
+  const handleSelectUserAdmin = (eventKey) => {
+    if (eventKey === 'modify-roles') {
+      navigate('/modify-roles');  // Navigate to Modify Roles page
+    }
+    if (eventKey === "modify-users") {
+      navigate("/modify-users"); // Navigate to Modify Users page
+    }
   };
 
   return (
@@ -29,13 +38,22 @@ export default function Dashboard() {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
-            <Dropdown onSelect={handleSelectTool}>
+            <Dropdown onSelect={handleSelectEssentialTools} className="me-3">
               <Dropdown.Toggle variant="secondary" id="dropdown-basic">
                 Essential Tools
               </Dropdown.Toggle>
               <Dropdown.Menu>
                 <Dropdown.Item eventKey="data-admin">Data Administration</Dropdown.Item>
                 {/* Add more dropdown items for other tools */}
+              </Dropdown.Menu>
+            </Dropdown>
+            <Dropdown onSelect={handleSelectUserAdmin} className="me-3">
+              <Dropdown.Toggle variant="secondary" id="user-admin-dropdown">
+                User Administration
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item eventKey="modify-users">Modify Users</Dropdown.Item>
+                <Dropdown.Item eventKey="modify-roles">Modify Roles</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
             <Nav.Link href="/logout">Logout</Nav.Link>

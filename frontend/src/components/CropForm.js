@@ -9,7 +9,6 @@ export default function CropForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const [crops, setCrops] = useState([]); // State for crop list
-  const [isEditing, setIsEditing] = useState(false); // Edit mode
   const [editRowId, setEditRowId] = useState(null); // Row ID being edited
   const [editCropName, setEditCropName] = useState(''); // Crop name for editing
   const [newCropName, setNewCropName] = useState('');
@@ -46,17 +45,15 @@ export default function CropForm() {
   };
 
   const handleEdit = (crop) => {
-    // setIsEditing(true);
-    setEditRowId(crop.ID);
-    setEditCropName(crop.Name);
+    setEditRowId(crop.id_crop);
+    setEditCropName(crop.name);
   };
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     try {
       await axios.put(`http://localhost:5000/crops/${editRowId}`, { name: editCropName });
-      setCrops((prev) => prev.map((crop) => (crop.ID === editRowId ? { ...crop, Name: editCropName } : crop)));
-      // setIsEditing(false);
+      setCrops((prev) => prev.map((crop) => (crop.id_crop === editRowId ? { ...crop, Name: editCropName } : crop)));
       setEditRowId(null);
       setEditCropName('');
       await fetchCrops();
@@ -67,7 +64,6 @@ export default function CropForm() {
   };
 
   const handleCancelEdit = () => {
-    // setIsEditing(false);
     setEditRowId(null);
     setEditCropName('');
   };
@@ -75,7 +71,7 @@ export default function CropForm() {
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/crops/${id}`);
-      setCrops((prev) => prev.filter((crop) => crop.ID !== id));
+      setCrops((prev) => prev.filter((crop) => crop.id_crop !== id));
       await fetchCrops();
     } catch (error) {
       console.error('Error deleting crop:', error);
@@ -153,21 +149,21 @@ export default function CropForm() {
               </thead>
               <tbody>
                 {crops.map((crop) => (
-                  <tr key={crop.ID}>
-                    <td>{crop.ID}</td>
+                  <tr key={crop.id_crop}>
+                    <td>{crop.id_crop}</td>
                     <td>
-                      {editRowId === crop.ID ? (
+                      {editRowId === crop.id_crop ? (
                         <Form.Control
                           type="text"
                           value={editCropName}
                           onChange={(e) => setEditCropName(e.target.value)}
                         />
                       ) : (
-                        crop.Name
+                        crop.name
                       )}
                     </td>
                     <td>
-                      {editRowId === crop.ID ? (
+                      {editRowId === crop.id_crop ? (
                         <>
                           <Button variant="success" className="me-2" onClick={handleSaveEdit}>
                             Save
@@ -181,7 +177,7 @@ export default function CropForm() {
                           <Button variant="warning" className="me-2" onClick={() => handleEdit(crop)}>
                             Edit
                           </Button>
-                          <Button variant="danger" onClick={() => handleDelete(crop.ID)}>
+                          <Button variant="danger" onClick={() => handleDelete(crop.id_crop)}>
                             Delete
                           </Button>
                         </>

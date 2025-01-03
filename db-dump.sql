@@ -16,14 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `mydb`
---
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `mydb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-
-USE `mydb`;
-
---
 -- Table structure for table `crop`
 --
 
@@ -31,10 +23,10 @@ DROP TABLE IF EXISTS `crop`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `crop` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=latin1;
+  `id_crop` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  PRIMARY KEY (`id_crop`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -43,7 +35,6 @@ CREATE TABLE `crop` (
 
 LOCK TABLES `crop` WRITE;
 /*!40000 ALTER TABLE `crop` DISABLE KEYS */;
-INSERT INTO `crop` VALUES (58,'Test_2'),(60,'Test-4');
 /*!40000 ALTER TABLE `crop` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -55,16 +46,16 @@ DROP TABLE IF EXISTS `data_product`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `data_product` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `Type` int NOT NULL,
-  `Flight` int NOT NULL,
-  `DownloadPath` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `HtmlPath` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `ThumbPath` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `TMSPath` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=177 DEFAULT CHARSET=latin1;
+  `id_data_product` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `type` int NOT NULL,
+  `flight` int NOT NULL,
+  `download_path` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `html_path` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `thumb_path` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `tms_path` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id_data_product`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -84,23 +75,23 @@ DROP TABLE IF EXISTS `flight`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `flight` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `Date` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `Project` int NOT NULL,
-  `Platform` int NOT NULL,
-  `Sensor` int NOT NULL,
-  `Altitude` float NOT NULL,
-  `Forward` float NOT NULL,
-  `Side` float NOT NULL,
-  PRIMARY KEY (`ID`),
-  KEY `Project` (`Project`),
-  KEY `Platform` (`Platform`),
-  KEY `Sensor` (`Sensor`),
-  CONSTRAINT `flight_platform_relation` FOREIGN KEY (`Platform`) REFERENCES `platform` (`ID`),
-  CONSTRAINT `flight_project_relation` FOREIGN KEY (`Project`) REFERENCES `project` (`ID`),
-  CONSTRAINT `flight_sensor_relation` FOREIGN KEY (`Sensor`) REFERENCES `sensor` (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=2079 DEFAULT CHARSET=latin1;
+  `id_flight` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `date` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `project` int NOT NULL,
+  `platform` int NOT NULL,
+  `sensor` int NOT NULL,
+  `altitude` float NOT NULL,
+  `forward` float NOT NULL,
+  `side` float NOT NULL,
+  PRIMARY KEY (`id_flight`),
+  KEY `Project` (`project`),
+  KEY `Platform` (`platform`),
+  KEY `Sensor` (`sensor`),
+  CONSTRAINT `flight_platform_relation` FOREIGN KEY (`platform`) REFERENCES `platform` (`id_platform`),
+  CONSTRAINT `flight_project_relation` FOREIGN KEY (`project`) REFERENCES `project` (`id_project`),
+  CONSTRAINT `flight_sensor_relation` FOREIGN KEY (`sensor`) REFERENCES `sensor` (`id_sensor`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -109,7 +100,6 @@ CREATE TABLE `flight` (
 
 LOCK TABLES `flight` WRITE;
 /*!40000 ALTER TABLE `flight` DISABLE KEYS */;
-INSERT INTO `flight` VALUES (2077,'Flight_Test2','2024-11-06',106,39,26,1,1,1);
 /*!40000 ALTER TABLE `flight` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -121,10 +111,10 @@ DROP TABLE IF EXISTS `platform`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `platform` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=latin1;
+  `id_platform` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  PRIMARY KEY (`id_platform`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -133,7 +123,6 @@ CREATE TABLE `platform` (
 
 LOCK TABLES `platform` WRITE;
 /*!40000 ALTER TABLE `platform` DISABLE KEYS */;
-INSERT INTO `platform` VALUES (39,'Test'),(40,'Test2');
 /*!40000 ALTER TABLE `platform` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -145,11 +134,11 @@ DROP TABLE IF EXISTS `product_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `product_type` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(500) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `Type` varchar(2) DEFAULT NULL,
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin1;
+  `id_product_type` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(500) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `type` varchar(2) DEFAULT NULL,
+  PRIMARY KEY (`id_product_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -158,7 +147,6 @@ CREATE TABLE `product_type` (
 
 LOCK TABLES `product_type` WRITE;
 /*!40000 ALTER TABLE `product_type` DISABLE KEYS */;
-INSERT INTO `product_type` VALUES (13,'Test_ProductType','R');
 /*!40000 ALTER TABLE `product_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -170,22 +158,22 @@ DROP TABLE IF EXISTS `project`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `project` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `Crop` int NOT NULL,
-  `PlantingDate` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `HarvestDate` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `Description` varchar(3000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `CenterLat` decimal(10,6) DEFAULT NULL,
-  `CenterLng` decimal(10,6) DEFAULT NULL,
-  `MinZoom` int NOT NULL,
-  `MaxZoom` int NOT NULL,
-  `DefaultZoom` int NOT NULL,
-  `VisualizationPage` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `Visible` tinyint(1) NOT NULL DEFAULT '0',
-  `FieldID` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=113 DEFAULT CHARSET=latin1;
+  `id_project` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `crop` int NOT NULL,
+  `planting_date` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `harvest_date` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  `description` varchar(3000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  `center_lattitude` decimal(10,6) DEFAULT NULL,
+  `center_longitude` decimal(10,6) DEFAULT NULL,
+  `min_zoom` int NOT NULL,
+  `max_zoom` int NOT NULL,
+  `default_zoom` int NOT NULL,
+  `visualization_page` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `visible` tinyint(1) NOT NULL DEFAULT '0',
+  `field_id` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id_project`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -194,7 +182,6 @@ CREATE TABLE `project` (
 
 LOCK TABLES `project` WRITE;
 /*!40000 ALTER TABLE `project` DISABLE KEYS */;
-INSERT INTO `project` VALUES (106,'Test2',1,'2024-10-30','2024-10-30','Test',1.000000,1.000000,1,1,1,'',0,0);
 /*!40000 ALTER TABLE `project` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -206,14 +193,14 @@ DROP TABLE IF EXISTS `raw_data`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `raw_data` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `Flight` int NOT NULL,
-  `DownloadPath` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `HtmlPath` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `ThumbPath` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=15340 DEFAULT CHARSET=latin1;
+  `id_raw_data` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `flight` int NOT NULL,
+  `download_path` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `html_path` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `thumb_path` varchar(2000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  PRIMARY KEY (`id_raw_data`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -233,10 +220,10 @@ DROP TABLE IF EXISTS `sensor`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `sensor` (
-  `ID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=latin1;
+  `id_sensor` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  PRIMARY KEY (`id_sensor`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -245,7 +232,6 @@ CREATE TABLE `sensor` (
 
 LOCK TABLES `sensor` WRITE;
 /*!40000 ALTER TABLE `sensor` DISABLE KEYS */;
-INSERT INTO `sensor` VALUES (26,'test'),(27,'test2');
 /*!40000 ALTER TABLE `sensor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -257,13 +243,13 @@ DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users` (
-  `user_id` int NOT NULL AUTO_INCREMENT,
+  `id_user` int NOT NULL AUTO_INCREMENT,
   `first_name` varchar(255) NOT NULL,
   `last_name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `admin_approved` enum('Approved','Disapproved') NOT NULL DEFAULT 'Disapproved',
-  PRIMARY KEY (`user_id`),
+  PRIMARY KEY (`id_user`),
   UNIQUE KEY `email_UNIQUE` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6543 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -287,4 +273,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-04  1:43:41
+-- Dump completed on 2024-12-05 17:50:38

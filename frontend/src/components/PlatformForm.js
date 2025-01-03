@@ -39,8 +39,8 @@ export default function PlatformForm() {
   };
 
   const handleEdit = (platform) => {
-    setEditRowId(platform.ID);
-    setEditPlatformName(platform.Name);
+    setEditRowId(platform.id_platform);
+    setEditPlatformName(platform.name);
   };
 
   const handleSaveEdit = async (e) => {
@@ -48,7 +48,7 @@ export default function PlatformForm() {
     try {
       await axios.put(`http://localhost:5000/platforms/${editRowId}`, { name: editPlatformName });
       setPlatforms((prev) =>
-        prev.map((platform) => (platform.ID === editRowId ? { ...platform, Name: editPlatformName } : platform))
+        prev.map((platform) => (platform.id_platform === editRowId ? { ...platform, name: editPlatformName } : platform))
       );
       setEditRowId(null);
       setEditPlatformName('');
@@ -68,7 +68,7 @@ export default function PlatformForm() {
     try {
       await axios.delete(`http://localhost:5000/platforms/${id}`);
       alert('Platform deleted successfully!');
-      setPlatforms((prev) => prev.filter((platform) => platform.ID !== id));
+      setPlatforms((prev) => prev.filter((platform) => platform.id_platform !== id));
       await fetchPlatforms();
     } catch (error) {
       console.error('Error deleting platform:', error);
@@ -150,21 +150,21 @@ export default function PlatformForm() {
               </thead>
               <tbody>
                 {platforms.map((platform) => (
-                  <tr key={platform.ID}>
-                    <td>{platform.ID}</td>
+                  <tr key={platform.id_platform}>
+                    <td>{platform.id_platform}</td>
                     <td>
-                      {editRowId === platform.ID ? (
+                      {editRowId === platform.id_platform ? (
                         <Form.Control
                           type="text"
                           value={editPlatformName}
                           onChange={(e) => setEditPlatformName(e.target.value)}
                         />
                       ) : (
-                        platform.Name
+                        platform.name
                       )}
                     </td>
                     <td>
-                      {editRowId === platform.ID ? (
+                      {editRowId === platform.id_platform ? (
                         <>
                           <Button variant="success" className="me-2" onClick={handleSaveEdit}>
                             Save
@@ -178,7 +178,7 @@ export default function PlatformForm() {
                           <Button variant="warning" className="me-2" onClick={() => handleEdit(platform)}>
                             Edit
                           </Button>
-                          <Button variant="danger" onClick={() => handleDelete(platform.ID)}>
+                          <Button variant="danger" onClick={() => handleDelete(platform.id_platform)}>
                             Delete
                           </Button>
                         </>

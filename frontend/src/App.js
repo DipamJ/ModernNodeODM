@@ -9,6 +9,9 @@ import ProductTypeForm from './components/ProductTypeForm';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Dashboard';
 import DataProductForm from './components/DataProductForm';
+import RegisterForm from './components/RegisterForm';
+import ModifyRole from "./components/ModifyRoleForm";
+import ModifyUser from "./components/ModifyUser";
 
 export default function App() {
   return (
@@ -26,6 +29,9 @@ export default function App() {
       <Route path="/flight" element={<FlightForm />} />
       <Route path="/product-type" element={<ProductTypeForm />} />
       <Route path="/data-product" element={<DataProductForm />} />
+      <Route path="/register" element={<RegisterForm />} />
+      <Route path="/modify-roles" element={<ModifyRole />} />;
+      <Route path="/modify-users" element={<ModifyUser />} />;
     </Routes>
   );
 }
