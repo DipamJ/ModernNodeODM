@@ -1,43 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Form, Button, Container, Row, Col, Alert } from "react-bootstrap";
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-export default function RegisterForm() {
+export default function MemberRegisterForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [pmEmail, setPMEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
+  // Fetch available projects from the backend
+  useEffect(() => {
+  }, []);
+
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:5000/register", {
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        password,
-      });
-      alert(response.data.message);
-      navigate('/login');
+        const response = await axios.post("http://localhost:5000/register-member", {
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            password,
+            pmEmail
+        });
+        alert(response.data.message);
+        navigate("/login-member");
     } catch (error) {
         if (error.response && error.response.status === 408) {
-          setError("Email already registered. Please use a different email.");
+            setError("Email already registered. Please use a different email.");
         } else {
-          setError("Registration failed. Please try again.");
+            setError("Registration failed. Please try again.");
         }
         setSuccess("");
-      }
-  };
+    }
+};
 
   return (
     <Container className="mt-5">
       <Row className="justify-content-center">
         <Col md={6}>
-          <h2 className="text-center mb-4">Create an Account</h2>
+          <h2 className="text-center mb-4">Member Registration</h2>
           {error && <Alert variant="danger">{error}</Alert>}
           {success && <Alert variant="success">{success}</Alert>}
           <Form onSubmit={handleRegister} className="p-4 shadow rounded">
@@ -81,8 +87,18 @@ export default function RegisterForm() {
                 required
               />
             </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Project Manager Email</Form.Label>
+              <Form.Control
+                type="pmEmail"
+                placeholder="Enter your project manager's email"
+                value={pmEmail}
+                onChange={(e) => setPMEmail(e.target.value)}
+                required
+              />
+            </Form.Group>
             <Button variant="primary" type="submit" className="w-100">
-              Sign Up
+              Register
             </Button>
           </Form>
         </Col>

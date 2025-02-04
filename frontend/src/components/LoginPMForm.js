@@ -17,7 +17,7 @@ export default function LoginForm() {
       localStorage.setItem('user_id', userData.id_user);
       localStorage.setItem('user_email', userData.email);
       alert(response.data.message);
-      navigate('/dashboard');  // Redirect to project page on success
+      navigate('/homepage-pm');  // Redirect to project page on success
     } catch (error) {
       setError(error.response ? error.response.data.message : 'Login failed');
     }

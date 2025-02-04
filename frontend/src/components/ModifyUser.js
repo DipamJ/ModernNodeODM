@@ -118,9 +118,7 @@ export default function ModifyUser() {
                 Essential Tools
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item eventKey="data-admin">
-                  Data Administration
-                </Dropdown.Item>
+                <Dropdown.Item eventKey="data-admin">Data Administration</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
             <Dropdown onSelect={handleSelectUserAdmin} className="me-3">

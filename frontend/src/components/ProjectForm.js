@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Container, Row, Col, Nav, Navbar, Tab, Tabs, Table, NavDropdown } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Nav, Navbar, Tab, Tabs, Table} from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../App.css';
 import axios from 'axios';
@@ -77,7 +77,8 @@ export default function ProjectForm() {
       minZoom: project.minZoom,
       maxZoom: project.maxZoom,
       defaultZoom: project.defaultZoom,
-      visualizationPage: project.visualizationPage
+      visualizationPage: project.visualizationPage,
+      leader_id: localStorage.getItem('user_id')
     };
     try {
         const response = await axios.post('http://localhost:5000/projects', projectData);  // Corrected the route
@@ -368,65 +369,65 @@ const handleEditChange = (e, field) => {
         </thead>
         <tbody>
           {projects.map((proj) => (
-            <tr key={proj.ID}>
-              <td>{proj.ID}</td>
+            <tr key={proj.id_project}>
+              <td>{proj.id_project}</td>
               <td>
-                {editRowId === proj.ID ? (
+                {editRowId === proj.id_project ? (
                   <Form.Control
                     type="text"
                     value={editProject.name || ''}
                     onChange={(e) => handleEditChange(e, 'name')}
                   />
                 ) : (
-                  proj.Name
+                  proj.name
                 )}
               </td>
               <td>
-                {editRowId === proj.ID ? (
+                {editRowId === proj.id_project ? (
                   <Form.Control
                     type="text"
                     value={editProject.crop || ''}
                     onChange={(e) => handleEditChange(e, 'crop')}
                   />
                 ) : (
-                  proj.Crop
+                  proj.crop
                 )}
               </td>
               <td>
-                {editRowId === proj.ID ? (
+                {editRowId === proj.id_project ? (
                   <Form.Control
                     type="date"
-                    value={editProject.plantingDate || ''}
+                    value={editProject.planting_date || ''}
                     onChange={(e) => handleEditChange(e, 'plantingDate')}
                   />
                 ) : (
-                  proj.PlantingDate
+                  proj.planting_date
                 )}
               </td>
               <td>
-                {editRowId === proj.ID ? (
+                {editRowId === proj.id_project ? (
                   <Form.Control
                     type="date"
-                    value={editProject.harvestDate || ''}
+                    value={editProject.harvest_date || ''}
                     onChange={(e) => handleEditChange(e, 'harvestDate')}
                   />
                 ) : (
-                  proj.HarvestDate
+                  proj.harvest_date
                 )}
               </td>
               <td>
-                {editRowId === proj.ID ? (
+                {editRowId === proj.id_project ? (
                   <Form.Control
                     as="textarea"
                     value={editProject.description || ''}
                     onChange={(e) => handleEditChange(e, 'description')}
                   />
                 ) : (
-                  proj.Description
+                  proj.description
                 )}
               </td>
               <td>
-                {editRowId === proj.ID ? (
+                {editRowId === proj.id_project ? (
                   <>
                     <Button
                       variant="success"
