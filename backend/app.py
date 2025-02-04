@@ -1,19 +1,27 @@
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from datetime import timedelta
-from models.project_model import get_all_projects, add_project, update_project, delete_project
+from flask_mail import Mail, Message
+from models.project_model import get_all_projects, add_project, update_project, delete_project, get_project_by_id
 from models.crop_model import get_all_crops, add_crop, update_crop, delete_crop
 from models.platform_model import get_all_platforms, add_platform, update_platform, delete_platform
 from models.sensor_model import get_all_sensors, add_sensor, update_sensor, delete_sensor
 from models.flight_model import get_all_flights, add_flight, update_flight, delete_flight
 from models.productType_model import get_all_product_types, add_product_type, update_product_type, delete_product_type
-from models.user_model import get_user_by_email, register_user, get_all_users, update_user_approval, assign_role_to_user, delete_user_by_id
+from models.user_model import get_user_by_email, register_user, get_all_users, update_user_approval, assign_role_to_user, delete_user_by_id, get_user_by_id
 from models.role_model import get_all_roles, add_role, update_role, delete_role
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'  # Replace with a secure key
 app.permanent_session_lifetime = timedelta(minutes=30)  # Session timeout
 CORS(app, supports_credentials=True)  # Enable cross-origin requests with credentials
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'dipamjyoti47@gmail.com'
+app.config['MAIL_PASSWORD'] = 'yghh lvvr vzwv wenj'
+mail = Mail(app)
 
 # Login route
 @app.route('/login', methods=['POST'])
@@ -23,9 +31,18 @@ def login():
 
     user = get_user_by_email(email)
     if user and user['password'] == data.get('password'):
+        session['user_id'] = user['id_user']
+        if user['admin_approved'] != 'Approved':
+            return jsonify({'message': 'Your account is not yet approved by the admin.'}), 403
         session['user'] = email  # Store user session
         print("Login Successful")
-        return jsonify({'message': 'Login successful', 'user': email}), 200
+        return jsonify({
+            "user": {
+                "id_user": user['id_user'],
+                "email": user['email']
+            },
+            "message": "Login successful"
+            }), 200
     else:
         print("Login Unsuccessful")
         return jsonify({'message': 'Invalid email Id or password'}), 401
@@ -43,11 +60,63 @@ def register():
 
         # Create user
         register_user(data)
-        return jsonify({'message': 'Registration successful'}), 201
+
+        admin_email = 'dipam@tamu.edu'  # Replace with the admin's email
+        msg = Message(
+            subject="New User Registration",
+            sender="test@gmail.com",
+            recipients=[admin_email],
+        )
+        link = f"http://localhost:3000/modify-users"
+        msg.body = f"""
+        A new user has registered with the following details:
+        Name: {data['first_name']} {data['last_name']}
+        Email: {data['email']}
+        
+        Approve/ Disapprove the user: {link}
+        """
+        mail.send(msg)
+
+        return jsonify({'message': 'Registration successful. Please wait for admin approval.'}), 201
     except Exception as e:
         print(f"Error in registration: {e}")
         return jsonify({'message': 'An error occurred during registration'}), 500
+    
+@app.route('/register-member', methods=['POST'])
+def register_member():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        manager_email = data.get('pmEmail')
 
+        # Check if the email already exists
+        if get_user_by_email(email):
+            return jsonify({'message': 'Email already registered'}), 408
+
+        # Create user
+        user_id = register_user(data)
+
+        # Send approval emails to project manager
+        msg = Message(
+            subject="Member Registration Approval Required",
+            sender="test@gmail.com",
+            recipients=[manager_email],
+        )
+        link = f"http://localhost:3000/approve-member/{user_id}"  # Approval link
+        msg.body = f"""
+        A new member has requested access to your project(s).
+        Name: {data['first_name']} {data['last_name']}
+        Email: {data['email']}
+        
+        Approve/Disapprove the member here: {link}
+        """
+        mail.send(msg)
+
+        return jsonify({'message': 'Registration successful. Please wait for project manager approval.'}), 201
+
+    except Exception as e:
+        print(f"Error in registration: {e}")
+        return jsonify({'message': 'An error occurred during registration'}), 500
 
 # Logout route
 @app.route('/logout', methods=['POST'])

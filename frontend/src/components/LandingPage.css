@@ -1,0 +1,49 @@
+.landing-page {
+    background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
+    color: #343a40;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .landing-page h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #007bff;
+  }
+  
+  .landing-page p {
+    font-size: 1.1rem;
+  }
+  
+  .dropdown-menu a {
+    font-size: 1rem;
+    color: #495057;
+    text-decoration: none;
+  }
+  
+  .dropdown-menu a:hover {
+    color: #0056b3;
+    background-color: #f8f9fa;
+  }
+  
+  .help-link {
+    color: #007bff;
+    text-decoration: underline;
+  }
+  
+  .help-link:hover {
+    color: #0056b3;
+  }
+  
+  footer {
+    background-color: #343a40;
+    color: #fff;
+    padding: 15px;
+    font-size: 0.9rem;
+  }
+  
+  footer p {
+    margin: 0;
+  }  

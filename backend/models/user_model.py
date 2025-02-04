@@ -130,3 +130,18 @@ def get_user_roles(user_id):
     except Exception as e:
         print(f"Error fetching user roles: {e}")
         return []
+    
+def get_user_by_id(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    query = "SELECT * FROM users WHERE id_user = %s"
+    try:
+        cursor.execute(query, (user_id,))
+        user = cursor.fetchone()
+        return user
+    except Exception as e:
+        print(f"Error fetching user: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
