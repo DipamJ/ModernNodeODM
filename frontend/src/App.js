@@ -27,6 +27,8 @@ export default function App() {
       {/* Default Route */}
       <Route path="/" element={<Navigate to="/home" />} />
       <Route path="/logout" element={<Navigate to="/login" />} />
+      <Route path="/logout-pm" element={<Navigate to="/login-pm" />} />
+      <Route path="/logout-member" element={<Navigate to="/login-member" />} />
       {/* All Forms */}
       <Route path="/login" element={<LoginForm />} />
       <Route path="/login-member" element={<LoginMemberForm />} />

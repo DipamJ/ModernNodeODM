@@ -18,8 +18,8 @@ def register_user(data):
     conn = get_db_connection()
     cursor = conn.cursor()
     query = """
-        INSERT INTO users (first_name, last_name, email, password)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO users (first_name, last_name, email, password, admin_approved)
+        VALUES (%s, %s, %s, %s, 'Pending')
     """
     try:
         cursor.execute(query, (
@@ -29,12 +29,16 @@ def register_user(data):
             data['password']
         ))
         conn.commit()
-        print("User added to the database.")
+        user_id = cursor.lastrowid  # Get the last inserted user ID
+        print(f"User added with ID {user_id}")
+        return user_id
     except Exception as e:
         print(f"Database Error: {e}")
+        return None
     finally:
         cursor.close()
         conn.close()
+
 
 # Fetch all users with roles and approval status
 def get_all_users():

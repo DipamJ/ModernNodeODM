@@ -2,13 +2,13 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from datetime import timedelta
 from flask_mail import Mail, Message
-from models.project_model import get_all_projects, add_project, update_project, delete_project, get_project_by_id
+from models.project_model import get_all_projects, add_project, update_project, delete_project, get_projects_by_manager, get_project_members_by_manager, update_member_project_status, remove_member_from_project, get_projects_by_manager_email, add_member_to_project, get_projects_for_member
 from models.crop_model import get_all_crops, add_crop, update_crop, delete_crop
 from models.platform_model import get_all_platforms, add_platform, update_platform, delete_platform
 from models.sensor_model import get_all_sensors, add_sensor, update_sensor, delete_sensor
 from models.flight_model import get_all_flights, add_flight, update_flight, delete_flight
 from models.productType_model import get_all_product_types, add_product_type, update_product_type, delete_product_type
-from models.user_model import get_user_by_email, register_user, get_all_users, update_user_approval, assign_role_to_user, delete_user_by_id, get_user_by_id
+from models.user_model import get_user_by_email, register_user, get_all_users, update_user_approval, assign_role_to_user, delete_user_by_id
 from models.role_model import get_all_roles, add_role, update_role, delete_role
 
 app = Flask(__name__)
@@ -96,13 +96,22 @@ def register_member():
         # Create user
         user_id = register_user(data)
 
-        # Send approval emails to project manager
+        project_ids = get_projects_by_manager_email(manager_email)
+
+        if not project_ids:
+            return jsonify({'message': 'No projects found for the provided Project Manager email'}), 404
+
+        # # Insert into project_membership table
+        for project_id in project_ids:
+            add_member_to_project(user_id, project_id)
+
+        # # Send approval emails to project manager
         msg = Message(
             subject="Member Registration Approval Required",
             sender="test@gmail.com",
             recipients=[manager_email],
         )
-        link = f"http://localhost:3000/approve-member/{user_id}"  # Approval link
+        link = f"http://localhost:3000/project-access"  # Approval link
         msg.body = f"""
         A new member has requested access to your project(s).
         Name: {data['first_name']} {data['last_name']}
@@ -456,6 +465,45 @@ def delete_user(user_id):
     except Exception as e:
         print(f"Error deleting user: {e}")
         return jsonify({'error': f"Failed to delete user: {e}"}), 500
+    
+@app.route('/managed-projects', methods=['GET'])
+def get_managed_projects():
+    user_id = session.get('user_id')
+    projects = get_projects_by_manager(user_id)
+    return jsonify({'projects': projects})
+
+@app.route('/project-members', methods=['GET'])
+def get_project_members():
+    user_id = session.get('user_id')
+    members = get_project_members_by_manager(user_id)
+    return jsonify({'members': members})
+
+@app.route('/member-approval/<int:member_id>', methods=['PUT'])
+def approve_member(member_id):
+    data = request.get_json()
+    project_id = data.get('project_id')
+    status = data.get('status')
+
+    update_member_project_status(member_id, project_id, status)
+    return jsonify({'message': f'Member {status} successfully'})
+
+@app.route('/remove-member/<int:member_id>/<int:project_id>', methods=['DELETE'])
+def remove_member(member_id, project_id):
+    remove_member_from_project(member_id, project_id)
+    return jsonify({'message': 'Member removed successfully'})
+
+@app.route('/member-projects', methods=['GET'])
+def get_member_projects():
+    user_id = session.get('user_id')
+
+    # Debugging print
+    print(f"Fetching projects for user_id: {user_id}")
+
+    projects = get_projects_for_member(user_id)
+
+    print(f"Projects retrieved: {projects}")  # Debugging print
+
+    return jsonify({'projects': projects})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
