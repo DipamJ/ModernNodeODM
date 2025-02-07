@@ -28,7 +28,7 @@ export default function MemberHome() {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
             <Nav.Link onClick={handleProjectManagement}>Project Management</Nav.Link>
-            <Nav.Link href="/logout">Logout</Nav.Link>
+            <Nav.Link href="/logout-member">Logout</Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Navbar>

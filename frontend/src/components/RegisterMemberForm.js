@@ -32,12 +32,15 @@ export default function MemberRegisterForm() {
     } catch (error) {
         if (error.response && error.response.status === 408) {
             setError("Email already registered. Please use a different email.");
+        } else if (error.response && error.response.status === 404) {
+            setError("No projects found for the given Project Manager's email.");
         } else {
             setError("Registration failed. Please try again.");
         }
         setSuccess("");
     }
 };
+
 
   return (
     <Container className="mt-5">

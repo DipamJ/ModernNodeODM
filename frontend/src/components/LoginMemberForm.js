@@ -13,6 +13,9 @@ export default function LoginForm() {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:5000/login', { email, password }, { withCredentials: true });
+      const userData = response.data.user;
+      localStorage.setItem('user_id', userData.id_user);
+      localStorage.setItem('user_email', userData.email);
       alert(response.data.message);
       navigate('/member-home');  // Redirect to project page on success
     } catch (error) {

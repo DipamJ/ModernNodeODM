@@ -65,7 +65,7 @@ export default function ProjectAccessControl() {
     }
     if (eventKey === 'project-access') {
         navigate('/project-access');
-      }
+    }
   };
 
   return (
@@ -93,7 +93,7 @@ export default function ProjectAccessControl() {
                 <Dropdown.Item eventKey="project-access">Project Access</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
-            <Nav.Link href="/logout">Logout</Nav.Link>
+            <Nav.Link href="/logout-pm">Logout</Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
@@ -152,7 +152,7 @@ export default function ProjectAccessControl() {
                             Approve
                           </Button>
                           <Button variant="danger"
-                            onClick={() => handleApproval(member.id_user, member.project_id, "Rejected")}>
+                            onClick={() => handleApproval(member.id_user, member.project_id, "Disapproved")}>
                             Reject
                           </Button>
                         </>

@@ -40,7 +40,7 @@ export default function Dashboard() {
                 <Dropdown.Item eventKey="project-access">Project Access</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
-            <Nav.Link href="/logout">Logout</Nav.Link>
+            <Nav.Link href="/logout-pm">Logout</Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
