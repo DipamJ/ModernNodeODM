@@ -11,7 +11,7 @@ export default function LandingPage() {
       <Container>
         <Row className="text-center mt-5">
           <Col>
-            <h1>Welcome to the Modern NodeODM Project</h1>
+            <h1>Welcome to the AI Based UAV Project</h1>
             <p className="mt-3">
               Streamline your project workflows with role-based access for Admins, Project Managers, and Members.
             </p>

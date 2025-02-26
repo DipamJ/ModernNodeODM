@@ -16,8 +16,8 @@ def add_project(data):
     conn = get_db_connection()
     cursor = conn.cursor()
     query = """
-        INSERT INTO project (name, crop, planting_date, harvest_date, description, center_lattitude, center_longitude, min_zoom, max_zoom, default_zoom, visualization_page, leader_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO project (name, crop, planting_date, harvest_date, description, center_lattitude, center_longitude, min_zoom, max_zoom, default_zoom, visualization_page, leader_id, season_year)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     query_membership = """
         INSERT INTO project_membership (project_id, user_id, role)
@@ -37,7 +37,8 @@ def add_project(data):
             data['maxZoom'],
             data['defaultZoom'],
             data['visualizationPage'],
-            data['leader_id']
+            data['leader_id'],
+            data['seasonYear'],
         ))
         conn.commit()
         print("Project added to the database.")
@@ -249,3 +250,13 @@ def get_projects_for_member(user_id):
     conn.close()
     
     return projects
+
+def fetch_project_by_id(project_id):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM project WHERE id_project = %s", (project_id,))
+    project = cursor.fetchone()
+    connection.close()
+    if project:
+        return project
+    return None 

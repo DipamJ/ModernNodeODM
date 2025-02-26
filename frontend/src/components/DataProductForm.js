@@ -156,7 +156,7 @@ export default function DataProductForm() {
                   <Form.Select name="project" value={searchFilters.project} onChange={handleSearchChange}>
                     <option value="All">All</option>
                     {projects.map((project) => (
-                      <option key={project.ID} value={project.ID}>{project.Name}</option>
+                      <option key={project.id_project} value={project.id_project}>{project.name}</option>
                     ))}
                   </Form.Select>
                 </Form.Group>
@@ -167,7 +167,7 @@ export default function DataProductForm() {
                   <Form.Select name="platform" value={searchFilters.platform} onChange={handleSearchChange}>
                     <option value="All">All</option>
                     {platforms.map((platform) => (
-                      <option key={platform.ID} value={platform.ID}>{platform.Name}</option>
+                      <option key={platform.id_platform} value={platform.id_platform}>{platform.name}</option>
                     ))}
                   </Form.Select>
                 </Form.Group>
@@ -178,7 +178,7 @@ export default function DataProductForm() {
                   <Form.Select name="sensor" value={searchFilters.sensor} onChange={handleSearchChange}>
                     <option value="All">All</option>
                     {sensors.map((sensor) => (
-                      <option key={sensor.ID} value={sensor.ID}>{sensor.Name}</option>
+                      <option key={sensor.id_sensor} value={sensor.id_sensor}>{sensor.name}</option>
                     ))}
                   </Form.Select>
                 </Form.Group>

@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Navbar, Nav, Dropdown, Row, Col, Card } from 'react-bootstrap';
+import { Container, Navbar, Nav, Dropdown, Table, Button } from 'react-bootstrap';
 import './Dashboard.css';
+import axios from 'axios';
 
-export default function Dashboard() {
+export default function HomePagePM() {
   const navigate = useNavigate();
+  const [projects, setProjects] = useState([]);
 
   const handleSelectEssentialTools = (eventKey) => {
     if (eventKey === 'data-admin') {
@@ -15,10 +17,26 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const response = await axios.get('http://localhost:5000/projects');
+        setProjects(response.data);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      }
+    }
+    fetchProjects();
+  }, []);
+
+  const handleProjectManage = (projectId) => {
+    navigate(`/project-actions/${projectId}`);
+  };
+
   return (
     <Container fluid>
       <Navbar bg="dark" variant="dark" expand="lg">
-      <Navbar.Brand href="#" className="d-flex align-items-center">
+      <Navbar.Brand href="homepage-pm" className="d-flex align-items-center">
                 <img
                 src={`${process.env.PUBLIC_URL}/logo.png`}
                 width="40"
@@ -46,18 +64,33 @@ export default function Dashboard() {
       </Navbar>
 
       <Container className="mt-4">
-        <Row>
-          <Col>
-            <Card>
-              <Card.Body>
-                <Card.Title>Welcome to West-TX Cotton UASHub</Card.Title>
-                <Card.Text>
-                  This is the starting point after login. Use the navigation menu above to access essential tools.
-                </Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+        <h3>Your Projects</h3>
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Project Name</th>
+              <th>Crop</th>
+              <th>Season Year</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((proj) => (
+              <tr key={proj.id_project}>
+                <td>{proj.id_project}</td>
+                <td>{proj.name}</td>
+                <td>{proj.crop}</td>
+                <td>{proj.season_year}</td>
+                <td>
+                  <Button variant="primary" onClick={() => handleProjectManage(proj.id_project)}>
+                    Manage
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </Container>
     </Container>
   );
