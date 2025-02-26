@@ -200,7 +200,7 @@ export default function FlightForm() {
               >
                 <option value="">Select Project</option>
                 {projects.map((project) => (
-                  <option key={project.ID} value={project.ID}>{project.Name}</option>
+                  <option key={project.id_project} value={project.id_project}>{project.name}</option>
                 ))}
               </Form.Control>
             </Form.Group>
@@ -216,7 +216,7 @@ export default function FlightForm() {
               >
                 <option value="">Select Platform</option>
                 {platforms.map((platform) => (
-                  <option key={platform.ID} value={platform.ID}>{platform.Name}</option>
+                  <option key={platform.id_platform} value={platform.id_platform}>{platform.name}</option>
                 ))}
               </Form.Control>
             </Form.Group>
@@ -232,7 +232,7 @@ export default function FlightForm() {
               >
                 <option value="">Select Sensor</option>
                 {sensors.map((sensor) => (
-                  <option key={sensor.ID} value={sensor.ID}>{sensor.Name}</option>
+                  <option key={sensor.id_sensor} value={sensor.id_sensor}>{sensor.name}</option>
                 ))}
               </Form.Control>
             </Form.Group>

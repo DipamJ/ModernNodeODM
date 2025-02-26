@@ -45,8 +45,8 @@ export default function SensorForm() {
 
   const handleEdit = (sensor) => {
     // setIsEditing(true);
-    setEditRowId(sensor.ID);
-    setEditSensorName(sensor.Name);
+    setEditRowId(sensor.id_sensor);
+    setEditSensorName(sensor.name);
   };
 
   const handleSaveEdit = async () => {
@@ -58,7 +58,7 @@ export default function SensorForm() {
       await axios.put(`http://localhost:5000/sensors/${editRowId}`, { name: editSensorName });
       setSensors((prev) =>
         prev.map((sensor) =>
-          sensor.ID === editRowId ? { ...sensor, Name: editSensorName } : sensor
+          sensor.id === editRowId ? { ...sensor, Name: editSensorName } : sensor
         )
       );
       setEditRowId(null);
@@ -166,21 +166,21 @@ export default function SensorForm() {
             </thead>
             <tbody>
               {sensors.map((sensor) => (
-                <tr key={sensor.ID}>
-                  <td>{sensor.ID}</td>
+                <tr key={sensor.id_sensor}>
+                  <td>{sensor.id_sensor}</td>
                   <td>
-                      {editRowId === sensor.ID ? (
+                      {editRowId === sensor.id_sensor ? (
                         <Form.Control
                           type="text"
                           value={editSensorName}
                           onChange={(e) => setEditSensorName(e.target.value)}
                         />
                       ) : (
-                        sensor.Name
+                        sensor.name
                       )}
                     </td>
                     <td>
-                      {editRowId === sensor.ID ? (
+                      {editRowId === sensor.id_sensor ? (
                         <>
                           <Button
                             variant="success"
@@ -207,7 +207,7 @@ export default function SensorForm() {
                           </Button>
                           <Button
                             variant="danger"
-                            onClick={() => handleDelete(sensor.ID)}
+                            onClick={() => handleDelete(sensor.id_sensor)}
                           >
                             Delete
                           </Button>

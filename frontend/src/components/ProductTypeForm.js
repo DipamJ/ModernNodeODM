@@ -48,9 +48,9 @@ export default function ProductTypeForm() {
   };
 
   const handleEdit = (product) => {
-    setEditRowId(product.ID);
-    setEditProductName(product.Name);
-    setEditProductType(product.Type);
+    setEditRowId(product.id_product_type);
+    setEditProductName(product.name);
+    setEditProductType(product.type);
   };
 
   const handleSaveEdit = async () => {
@@ -65,7 +65,7 @@ export default function ProductTypeForm() {
       });
       setProductTypes((prev) =>
         prev.map((product) =>
-          product.ID === editRowId
+          product.id_product_type === editRowId
             ? { ...product, Name: editProductName, Type: editProductType }
             : product
         )
@@ -90,7 +90,7 @@ export default function ProductTypeForm() {
   const handleDeleteProductType = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/product-types/${id}`);
-      setProductTypes(productTypes.filter((type) => type.ID !== id));
+      setProductTypes(productTypes.filter((type) => type.id_product_type !== id));
       alert('Product type deleted successfully');
       await fetchProductTypes();
     } catch (error) {
@@ -202,21 +202,21 @@ export default function ProductTypeForm() {
               </thead>
               <tbody>
                 {productTypes.map((product) => (
-                  <tr key={product.ID}>
-                    <td>{product.ID}</td>
+                  <tr key={product.id_product_type}>
+                    <td>{product.id_product_type}</td>
                     <td>
-                      {editRowId === product.ID ? (
+                      {editRowId === product.id_product_type ? (
                         <Form.Control
                           type="text"
                           value={editProductName}
                           onChange={(e) => setEditProductName(e.target.value)}
                         />
                       ) : (
-                        product.Name
+                        product.name
                       )}
                     </td>
                     <td>
-                      {editRowId === product.ID ? (
+                      {editRowId === product.id_product_type ? (
                         <Form.Select
                           value={editProductType}
                           onChange={(e) => setEditProductType(e.target.value)}
@@ -225,11 +225,11 @@ export default function ProductTypeForm() {
                           <option value="V">V</option>
                         </Form.Select>
                       ) : (
-                        product.Type
+                        product.type
                       )}
                     </td>
                     <td>
-                      {editRowId === product.ID ? (
+                      {editRowId === product.id_product_type ? (
                         <>
                           <Button variant="success" className="me-2" onClick={handleSaveEdit}>
                             Save

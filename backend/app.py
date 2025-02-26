@@ -1,8 +1,8 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, Response
 from flask_cors import CORS
 from datetime import timedelta
 from flask_mail import Mail, Message
-from models.project_model import get_all_projects, add_project, update_project, delete_project, get_projects_by_manager, get_project_members_by_manager, update_member_project_status, remove_member_from_project, get_projects_by_manager_email, add_member_to_project, get_projects_for_member
+from models.project_model import get_all_projects, add_project, update_project, delete_project, get_projects_by_manager, get_project_members_by_manager, update_member_project_status, remove_member_from_project, get_projects_by_manager_email, add_member_to_project, get_projects_for_member, fetch_project_by_id
 from models.crop_model import get_all_crops, add_crop, update_crop, delete_crop
 from models.platform_model import get_all_platforms, add_platform, update_platform, delete_platform
 from models.sensor_model import get_all_sensors, add_sensor, update_sensor, delete_sensor
@@ -10,6 +10,9 @@ from models.flight_model import get_all_flights, add_flight, update_flight, dele
 from models.productType_model import get_all_product_types, add_product_type, update_product_type, delete_product_type
 from models.user_model import get_user_by_email, register_user, get_all_users, update_user_approval, assign_role_to_user, delete_user_by_id
 from models.role_model import get_all_roles, add_role, update_role, delete_role
+from models.upload_model import save_upload_metadata, get_all_uploads, check_duplicate_upload
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'  # Replace with a secure key
@@ -163,6 +166,18 @@ def get_projects():
         print(f"Error fetching projects: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/projects/<int:id>', methods=['GET'])
+def get_project_by_id(id):
+    try:
+        project = fetch_project_by_id(id)
+        if not project:
+            return jsonify({'error': 'Project not found'}), 404
+                
+        return jsonify(project)
+    except Exception as e:
+        print(f"Error fetching project: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/projects/<int:id>', methods=['PUT'])
 def modify_project(id):
     data = request.json
@@ -174,6 +189,7 @@ def modify_project(id):
 def remove_project(id):
     delete_project(id)
     return jsonify({'message': 'Project deleted successfully!'})
+    
 
 @app.route('/crops', methods=['GET'])
 def get_crops():
@@ -504,6 +520,101 @@ def get_member_projects():
     print(f"Projects retrieved: {projects}")  # Debugging print
 
     return jsonify({'projects': projects})
+
+UPLOAD_FOLDER = "uploads"
+ALLOWED_EXTENSIONS = {"zip"}
+MAX_CONTENT_LENGTH = 50 * 1024 * 1024 * 1024
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure directory exists
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/check-duplicate-upload', methods=['GET'])
+def check_duplicate():
+    filename = request.args.get("filename")
+    project = request.args.get("project")
+
+    if not filename or not project:
+        return jsonify({"error": "Missing filename or project"}), 400
+
+    exists = check_duplicate_upload(filename, project)
+    return jsonify({"exists": exists})
+
+@app.route('/upload', methods=['POST'])
+def upload_uas_data():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        project = request.form.get("project", "")
+        if check_duplicate_upload(filename, project):
+            return jsonify({"error": "File with this name already exists in the project"}), 409
+        
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        with open(file_path, "wb") as f:
+            for chunk in file.stream:
+                f.write(chunk)
+
+        # Retrieve metadata from request
+        metadata = request.form
+        project = metadata.get("project", "")
+        platform = metadata.get("platform", "")
+        sensor = metadata.get("sensor", "")
+        date = metadata.get("date", "")
+        flight = metadata.get("flight", "")
+        recipient_email = metadata.get("to", "").strip()
+        cc_email = metadata.get("cc", "").strip()
+        note = metadata.get("note", "")
+
+        # Check for missing fields
+        if not all([project, platform, sensor, date, flight]):
+            return jsonify({"error": "Missing metadata fields"}), 400
+
+        try:
+            save_upload_metadata(filename, project, platform, sensor, date, flight, file_path)
+            msg = Message(
+                subject="New UAS Data Uploaded",
+                sender="test@gmail.com",
+                recipients=[recipient_email]
+            )
+            if cc_email:
+                msg.cc = [cc_email]
+
+            msg.body = f"""
+            A new file has been uploaded.
+            
+            📂 File Name: {filename}
+            📍 Project: {project}
+            🚀 Platform: {platform}
+            🎛️ Sensor: {sensor}
+            📅 Date: {date}
+            ✈️ Flight: {flight}
+            📩 Note: {note}
+
+            File Path: {file_path}
+            """
+            mail.send(msg)
+            return jsonify({"message": "File uploaded successfully"}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"error": "Invalid file format"}), 400
+
+@app.route('/uploads', methods=['GET'])
+def fetch_uploaded_files():
+    try:
+        uploads = get_all_uploads()
+        return jsonify(uploads), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
