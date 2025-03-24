@@ -18,33 +18,23 @@ export default function UploadRawUASData() {
     platform: '',
     sensor: '',
     date: '',
-    flight: ''
+    altitude: '',
+    forward: '',
+    side: '',
+    notes: ''
   });
 
   const [dropdownData, setDropdownData] = useState({
     platforms: [],
-    sensors: [],
-    flights: []
+    sensors: []
   });
-
-  const [manualFlightEntry, setManualFlightEntry] = useState(false);
-  const [newFlight, setNewFlight] = useState({
-        name: '',
-        date: '',
-        altitude: '',
-        forward: '',
-        side: '',
-        project: '',
-        platform: '',
-        sensor: ''
-    });
 
   const navigate = useNavigate();
 
   const [emailData, setEmailData] = useState({
-    to: "jose.landivarscott@ag.tamu.edu",
-    cc: "julianna.mccoy@ag.tamu.edu",
-    note: ""
+    to: "",
+    cc: "",
+    message: ""
     });
 
   useEffect(() => {
@@ -138,12 +128,11 @@ export default function UploadRawUASData() {
       alert("File uploaded successfully!");
       setProgress(100);
 
-      // ✅ Reset form correctly
       setTimeout(() => {
         setProgress(0);
         setUploading(false);
-        setMetadata({ project: projectName, platform: '', sensor: '', date: '', flight: '' });
-        setEmailData({ to: "jose.landivarscott@ag.tamu.edu", cc: "julianna.mccoy@ag.tamu.edu", note: "" });        
+        setMetadata({ project: projectName, platform: '', sensor: '', date: '', flight: '', altitude: '', forward: '', side: '', notes: '' });
+        setEmailData({ to: "jose.landivarscott@ag.tamu.edu", cc: "julianna.mccoy@ag.tamu.edu", message: "" });        
         setSelectedFile(null);
       }, 1500);
       
@@ -166,20 +155,9 @@ export default function UploadRawUASData() {
     }
   };
 
-  const handleManualFlightToggle = () => {
-    setManualFlightEntry(!manualFlightEntry);
-    if (!manualFlightEntry) {
-        setMetadata({ ...metadata, flight: "" });
-    }
-  };
-  
-  const handleNewFlightChange = (e) => {
-    setNewFlight({ ...newFlight, [e.target.name]: e.target.value });
-  };
-
   const handleEmailChange = (e) => {
     setEmailData({ ...emailData, [e.target.name]: e.target.value });
-};
+  };
 
   return (
     <Container fluid>
@@ -225,7 +203,31 @@ export default function UploadRawUASData() {
                     ))}
                   </Form.Select>
                 </Form.Group>
-              </Col>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Flight Altitude</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    name="altitude" 
+                    value={metadata.altitude} 
+                    onChange={handleMetadataChange} 
+                    required 
+                    placeholder="Enter Flight Altitude" 
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Side Overlap</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    name="side" 
+                    value={metadata.side} 
+                    onChange={handleMetadataChange} 
+                    required 
+                    placeholder="Enter Side Overlap" 
+                  />
+                </Form.Group>
+                </Col>
 
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -242,77 +244,29 @@ export default function UploadRawUASData() {
                   <Form.Label>Date</Form.Label>
                   <Form.Control type="date" name="date" value={metadata.date} onChange={handleMetadataChange} required />
                 </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Forward Overlap</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    name="forward" 
+                    value={metadata.forward} 
+                    onChange={handleMetadataChange} 
+                    required 
+                    placeholder="Enter Forward Overlap" 
+                  />
+                </Form.Group>
               </Col>
             </Row>
 
             <Form.Group className="mb-3">
-                <Form.Label>Flight</Form.Label>
-                {!manualFlightEntry ? (
-                    <Form.Select name="flight" value={metadata.flight} onChange={handleMetadataChange} required>
-                        <option value="">Select Flight</option>
-                        {dropdownData.flights.map(flight => (
-                            <option key={flight.id_flight} value={flight.name}>{flight.name}</option>
-                        ))}
-                    </Form.Select>
-                ) : (
-                    <div>
-                        <Form.Control
-                            type="text"
-                            placeholder="Enter new flight name"
-                            name="name"
-                            value={newFlight.name}
-                            onChange={handleNewFlightChange}
-                            required
-                        />
-                        <Form.Control
-                            type="date"
-                            name="date"
-                            value={newFlight.date}
-                            onChange={handleNewFlightChange}
-                            required
-                            className="mt-2"
-                        />
-                        <Form.Control
-                            type="number"
-                            name="altitude"
-                            placeholder="Flight Altitude"
-                            value={newFlight.altitude}
-                            onChange={handleNewFlightChange}
-                            className="mt-2"
-                            required
-                        />
-                        <Form.Control
-                            type="number"
-                            name="forward"
-                            placeholder="Forward Overlap"
-                            value={newFlight.forward}
-                            onChange={handleNewFlightChange}
-                            className="mt-2"
-                            required
-                        />
-                        <Form.Control
-                            type="number"
-                            name="side"
-                            placeholder="Side Overlap"
-                            value={newFlight.side}
-                            onChange={handleNewFlightChange}
-                            className="mt-2"
-                            required
-                        />
-                    </div>
-                )}
-                <Form.Check
-                    type="checkbox"
-                    label="Enter new flight details"
-                    checked={manualFlightEntry}
-                    onChange={handleManualFlightToggle}
-                    className="mt-2"
-                />
+              <Form.Label>Select .zip File</Form.Label>
+              <Form.Control id="fileInput" type="file" accept=".zip" onChange={handleFileChange} required />
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Select .zip File</Form.Label>
-              <Form.Control id="fileInput" type="file" accept=".zip" onChange={handleFileChange} required />
+              <Form.Label>Notes</Form.Label>
+              <Form.Control as="textarea" rows={3} name="notes" value={metadata.notes} onChange={handleMetadataChange} />
             </Form.Group>
 
             {/* Notification Section */}
@@ -329,8 +283,8 @@ export default function UploadRawUASData() {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                    <Form.Label>Note</Form.Label>
-                    <Form.Control as="textarea" rows={3} name="note" value={emailData.note} onChange={handleEmailChange} />
+                    <Form.Label>Message</Form.Label>
+                    <Form.Control as="textarea" rows={3} name="message" value={emailData.message} onChange={handleEmailChange} />
                 </Form.Group>
             </Card>
 
@@ -352,19 +306,23 @@ export default function UploadRawUASData() {
                     <th>Platform</th>
                     <th>Sensor</th>
                     <th>Date</th>
-                    <th>Flight</th>
+                    <th>Flight Altitude</th>
+                    <th>Forward Overlap</th>
+                    <th>Side Overlap</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {uploadedFiles.map((file) => (
+                {uploadedFiles.filter(file => file.project === projectName).map((file) => (
                     <tr key={file.id_uas_uploads}>
                         <td>{file.filename}</td>
                         <td>{file.project}</td>
                         <td>{file.platform}</td>
                         <td>{file.sensor}</td>
                         <td>{file.date}</td>
-                        <td>{file.flight}</td>
+                        <td>{file.altitude}</td>
+                        <td>{file.forward}</td>
+                        <td>{file.side}</td>
                         <td>
                             <Button variant="primary" href={`/uploads/${file.filename}`} target="_blank">Download</Button>
                         </td>

@@ -22,6 +22,7 @@ import ProjectManagement from "./components/ProjectManagement";
 import ProjectAccess from "./components/ProjectAccessControl";
 import UploadRawData from "./components/UploadRawData";
 import ProjectActions from "./components/ProjectActions";
+import GenerateAttributes from './components/GenerateAttributes';
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
       <Route path="/project-access" element={<ProjectAccess />} />
       <Route path="/upload-raw-data/:projectId" element={<UploadRawData />} />
       <Route path="/project-actions/:projectId" element={<ProjectActions />} />
+      <Route path="/generate-attributes/:projectId" element={<GenerateAttributes />} />
     </Routes>
   );
 }

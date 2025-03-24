@@ -1,15 +1,15 @@
 from db_config import get_db_connection
 
-def save_upload_metadata(filename, project, platform, sensor, date, flight, file_path):
+def save_upload_metadata(filename, project, platform, sensor, date, file_path, altitude, forward, side, notes):
     """Saves UAS data upload metadata to the database."""
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
         query = """
-            INSERT INTO uas_uploads (filename, project, platform, sensor, date, flight, file_path)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO uas_uploads (filename, project, platform, sensor, date, file_path, altitude, forward, side, notes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (filename, project, platform, sensor, date, flight, file_path))
+        cursor.execute(query, (filename, project, platform, sensor, date, file_path, altitude, forward, side, notes))
         connection.commit()
         connection.close()
     except Exception as e:

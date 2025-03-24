@@ -1,4 +1,9 @@
-from flask import Flask, request, jsonify, session, Response
+import glob
+import sys
+from models.boundary_model import get_all_boundaries, save_upload_boundary_metadata
+from models.chm_model import get_all_chms, save_upload_chm_metadata
+from models.orthomosaic_model import get_all_orthomosaics, save_upload_orthomosaic_metadata
+from flask import Flask, request, jsonify, session, send_file
 from flask_cors import CORS
 from datetime import timedelta
 from flask_mail import Mail, Message
@@ -13,6 +18,8 @@ from models.role_model import get_all_roles, add_role, update_role, delete_role
 from models.upload_model import save_upload_metadata, get_all_uploads, check_duplicate_upload
 import os
 from werkzeug.utils import secure_filename
+from models.canopy import generate_cc_dat, generate_cc_boundary
+import geopandas
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'  # Replace with a secure key
@@ -522,12 +529,21 @@ def get_member_projects():
     return jsonify({'projects': projects})
 
 UPLOAD_FOLDER = "uploads"
+UPLOAD_FOLDER_BOUNDARY = "boundaries"
+UPLOAD_FOLDER_ORTHO = "orthomosaics"
+UPLOAD_FOLDER_CHM = "chms"
 ALLOWED_EXTENSIONS = {"zip"}
 MAX_CONTENT_LENGTH = 50 * 1024 * 1024 * 1024
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER_BOUNDARY"] = UPLOAD_FOLDER_BOUNDARY
+app.config["UPLOAD_FOLDER_ORTHO"] = UPLOAD_FOLDER_ORTHO
+app.config["UPLOAD_FOLDER_CHM"] = UPLOAD_FOLDER_CHM
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure directory exists
+os.makedirs(UPLOAD_FOLDER_BOUNDARY, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_ORTHO, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_CHM, exist_ok=True)
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -569,17 +585,20 @@ def upload_uas_data():
         platform = metadata.get("platform", "")
         sensor = metadata.get("sensor", "")
         date = metadata.get("date", "")
-        flight = metadata.get("flight", "")
+        altitude = metadata.get("altitude", "")
+        forward = metadata.get("forward", "")
+        side = metadata.get("side", "")
+        notes = metadata.get("notes", "")
         recipient_email = metadata.get("to", "").strip()
         cc_email = metadata.get("cc", "").strip()
-        note = metadata.get("note", "")
+        message = metadata.get("message", "")
 
         # Check for missing fields
-        if not all([project, platform, sensor, date, flight]):
+        if not all([project, platform, sensor, date, altitude, forward, side, notes]):
             return jsonify({"error": "Missing metadata fields"}), 400
 
         try:
-            save_upload_metadata(filename, project, platform, sensor, date, flight, file_path)
+            save_upload_metadata(filename, project, platform, sensor, date, file_path, altitude, forward, side, notes)
             msg = Message(
                 subject="New UAS Data Uploaded",
                 sender="test@gmail.com",
@@ -596,8 +615,7 @@ def upload_uas_data():
             🚀 Platform: {platform}
             🎛️ Sensor: {sensor}
             📅 Date: {date}
-            ✈️ Flight: {flight}
-            📩 Note: {note}
+            📩 Note: {message}
 
             File Path: {file_path}
             """
@@ -614,6 +632,164 @@ def fetch_uploaded_files():
         uploads = get_all_uploads()
         return jsonify(uploads), 200
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/boundaries', methods=['GET'])
+def get_boundaries():
+    try:
+        boundaries = get_all_boundaries()
+        return jsonify(boundaries), 200
+    except Exception as e:
+        print(f"Error fetching boundaries: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/boundaries/upload', methods=['POST'])
+def upload_boundary_data():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files["file"]
+    projectId = request.form["projectId"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        fileName = secure_filename(file.filename)       
+        
+        filePath = os.path.join(app.config["UPLOAD_FOLDER_BOUNDARY"], fileName)
+        with open(filePath, "wb") as f:
+            for chunk in file.stream:
+                f.write(chunk)
+
+        try:
+            save_upload_boundary_metadata(fileName, filePath, projectId)
+            return jsonify({"message": "File uploaded successfully"}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"error": "Invalid file format"}), 400
+
+@app.route('/orthomosaics', methods=['GET'])
+def get_orthomosaics():
+    try:
+        orthomosaics = get_all_orthomosaics()
+        return jsonify(orthomosaics), 200
+    except Exception as e:
+        print(f"Error fetching orthomosaics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/orthomosaic/upload', methods=['POST'])
+def upload_orthomosaic_data():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files["file"]
+    projectId = request.form["projectId"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        fileName = secure_filename(file.filename)       
+        
+        filePath = os.path.join(app.config["UPLOAD_FOLDER_ORTHO"], fileName)
+        with open(filePath, "wb") as f:
+            for chunk in file.stream:
+                f.write(chunk)
+
+        try:
+            save_upload_orthomosaic_metadata(fileName, filePath, projectId)
+            return jsonify({"message": "File uploaded successfully"}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"error": "Invalid file format"}), 400
+
+@app.route('/chms', methods=['GET'])
+def get_chms():
+    try:
+        chms = get_all_chms()
+        return jsonify(chms), 200
+    except Exception as e:
+        print(f"Error fetching chms: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/chm/upload', methods=['POST'])
+def upload_chm_data():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files["file"]
+    projectId = request.form["projectId"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        fileName = secure_filename(file.filename)       
+        
+        filePath = os.path.join(app.config["UPLOAD_FOLDER_CHM"], fileName)
+        with open(filePath, "wb") as f:
+            for chunk in file.stream:
+                f.write(chunk)
+
+        try:
+            save_upload_chm_metadata(fileName, filePath, projectId)
+            return jsonify({"message": "File uploaded successfully"}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"error": "Invalid file format"}), 400
+
+@app.route('/generate-rgb-attributes', methods=['POST'])
+def generate_rgb_attributes_endpoint():
+    try:
+        data = request.get_json()
+        orthomosaic_image = data.get("orthomosaic_image")
+        project = data.get("project")
+        file_prefix = data.get("file_prefix", "default")
+        epsg = data.get("epsg", 4326)
+        boundary_shp = data.get("boundary_shp")
+        
+        if not orthomosaic_image or not project or not boundary_shp:
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        orthomosaic_path = os.path.join("orthomosaics", orthomosaic_image)
+        boundary_path = os.path.join("boundaries", boundary_shp)
+
+        # Define an output folder—for example, under "generated/<project>"
+        output_folder = os.path.join("generated", project)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        
+        # Step 1: Generate the canopy cover .dat file
+        generate_cc_dat(orthomosaic_path, output_folder, file_prefix)
+        
+        # Step 2: Generate the updated boundary shapefile with canopy cover attributes
+        generate_cc_boundary(epsg, boundary_path, output_folder, file_prefix)
+        return jsonify({"message": "Canopy cover file generated successfully"}), 200
+    except Exception as e:
+        print("Error in /generate-rgb-attributes:", e)
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/download-rgb-attributes', methods =['POST'])
+def download_rgb_attributes_endpoint():
+    try:
+        data = request.get_json()
+        geojson_pattern = os.path.join("generated", data.get("projectName"), "cc_boundary", "cc_boundary_*.geojson")
+        geojson_files = glob.glob(geojson_pattern)
+        if not geojson_files:
+            return jsonify({"error": "No boundary file found"}), 404
+        geojson_path = geojson_files[0]
+        gdf = geopandas.read_file(geojson_path)
+        xlsx_path = geojson_path.replace(".geojson", ".xlsx")
+        gdf.to_excel(xlsx_path, index=False)
+        return send_file(xlsx_path,
+                         as_attachment=True,
+                         attachment_filename=os.path.basename(xlsx_path),
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        )
+        
+    except Exception as e:
+        sys.stdout.write("Error in /download-rgb-attributes:" + str(e))
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
