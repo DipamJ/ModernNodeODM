@@ -1,3 +1,4 @@
+import sys
 from db_config import get_db_connection
 
 def get_all_projects():
@@ -41,7 +42,7 @@ def add_project(data):
             data['seasonYear'],
         ))
         conn.commit()
-        print("Project added to the database.")
+        sys.stdout.write("Project added to the database. \n")
         project_id = cursor.lastrowid
         cursor.execute(query_membership, (
             project_id,
@@ -49,10 +50,10 @@ def add_project(data):
             "Leader"
         ))
         conn.commit()
-        print("Project Membership added to the database.")
+        sys.stdout.write("Project Membership added to the database. \n")
         
     except Exception as e:
-        print(f"Database Error: {e}")
+        sys.stdout.write(f"Database Error: {e} \n")
     finally:
         cursor.close()
         conn.close()

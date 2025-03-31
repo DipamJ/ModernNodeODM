@@ -1,3 +1,4 @@
+import sys
 from db_config import get_db_connection
 import logging
 
@@ -30,10 +31,10 @@ def register_user(data):
         ))
         conn.commit()
         user_id = cursor.lastrowid  # Get the last inserted user ID
-        print(f"User added with ID {user_id}")
+        sys.stdout.write(f"User added with ID {user_id} \n")
         return user_id
     except Exception as e:
-        print(f"Database Error: {e}")
+        sys.stdout.write(f"Database Error: {e}")
         return None
     finally:
         cursor.close()

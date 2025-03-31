@@ -7,6 +7,25 @@ from flask import Flask, request, jsonify, session, send_file
 from flask_cors import CORS
 from datetime import timedelta
 from flask_mail import Mail, Message
+from qgis.core import QgsApplication
+from qgis.analysis import QgsNativeAlgorithms
+from processing.core.Processing import Processing
+
+# --- QGIS Initialization ---
+# Set the QGIS prefix path (should match your QGIS installation, e.g. /usr)
+QgsApplication.setPrefixPath("/usr", True)
+# Create a QgsApplication instance; False means no GUI is used
+qgs = QgsApplication([], False)
+# qgs.setHomePath("/app") 
+qgs.initQgis()
+
+# Initialize the processing framework
+Processing.initialize()
+# Add the native algorithms provider so that processing algorithms are available
+qgs.processingRegistry().addProvider(QgsNativeAlgorithms())
+# --- End QGIS Initialization ---
+
+# Now import modules that depend on QGIS processing functionality
 from models.project_model import get_all_projects, add_project, update_project, delete_project, get_projects_by_manager, get_project_members_by_manager, update_member_project_status, remove_member_from_project, get_projects_by_manager_email, add_member_to_project, get_projects_for_member, fetch_project_by_id
 from models.crop_model import get_all_crops, add_crop, update_crop, delete_crop
 from models.platform_model import get_all_platforms, add_platform, update_platform, delete_platform
@@ -70,6 +89,7 @@ def register():
 
         # Create user
         register_user(data)
+        sys.stdout.write("User Registered Successfully ! \n")
 
         admin_email = 'dipam@tamu.edu'  # Replace with the admin's email
         msg = Message(
@@ -89,7 +109,7 @@ def register():
 
         return jsonify({'message': 'Registration successful. Please wait for admin approval.'}), 201
     except Exception as e:
-        print(f"Error in registration: {e}")
+        sys.stdout.write(f"Error in registration: {e}")
         return jsonify({'message': 'An error occurred during registration'}), 500
     
 @app.route('/register-member', methods=['POST'])
@@ -155,13 +175,13 @@ projects = []
 @app.route('/projects', methods=['POST'])
 def create_project():  # Changed name from `add_project` to `create_project`
     data = request.get_json()
-    print("Received Data:", data)
+    sys.stdout.write("Received Data:" + str(data) + "\n")
 
     try:
         add_project(data)  # This refers to the function in project_model.py
         return jsonify({'message': 'Project added successfully'}), 201
     except Exception as e:
-        print(f"Error: {str(e)}")  # Log the error for debugging
+        sys.stdout.write(f"Error: {str(e)} \n")  # Log the error for debugging
         return jsonify({'error': str(e)}), 500
 
 @app.route('/projects', methods=['GET'])
@@ -793,4 +813,9 @@ def download_rgb_attributes_endpoint():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    try:
+        # Run the Flask application
+        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    finally:
+        # Ensure that QGIS shuts down properly when the app stops.
+        qgs.exitQgis()

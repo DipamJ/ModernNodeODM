@@ -6,6 +6,8 @@ import glob
 import models.rs2 as rs2
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import tempfile
+from qgis import processing
 
 def generate_cc_dat(input_image, output_folder, file_prefix):
     """
@@ -69,121 +71,123 @@ def generate_cc_dat(input_image, output_folder, file_prefix):
 
 def generate_cc_boundary(epsg, boundary_geojson, out_dir, selected_orthomosaic_FileName_noExt):
     """
-    Generate a new GeoJSON boundary file with canopy cover attributes using geopandas.
+    Generate an updated GeoJSON boundary file with canopy cover attributes
+    using QGIS processing to clip the canopy cover raster by each polygon.
     """
-    import sys
-    sys.stdout.write("Inside generate_cc_boundary (geopandas version)\n")
-    sys.stdout.write("Boundary GeoJSON: " + boundary_geojson + "\n")
-    sys.stdout.write("Output directory: " + out_dir + "\n")
-    sys.stdout.write("Orthomosaic base name: " + selected_orthomosaic_FileName_noExt + "\n")
-    
-    # Read the boundary file using geopandas
+    # Read the boundary file
     gdf = gpd.read_file(boundary_geojson)
-    sys.stdout.write("Loaded boundary file with {} features.\n".format(len(gdf)))
-    
-    # Create a spatial reference from the EPSG code (if needed for later processing)
-    sproj = osr.SpatialReference()
-    sproj.ImportFromEPSG(int(epsg))
-    
-    # Locate all .dat files in the cc_rgb folder
-    cc_rgb_dir = os.path.join(out_dir, "cc_rgb")
-    sys.stdout.write("Looking in: " + cc_rgb_dir + "\n")
-    dat_files = glob.glob(os.path.join(cc_rgb_dir, "*.dat"))
-    dat_files.sort()
-    sys.stdout.write("Found .dat files:\n")
-    for f in dat_files:
-        sys.stdout.write(f + "\n")
-    
-    # Create output folder for the updated boundary GeoJSON file
+    sys.stdout.write("Loaded boundary file with {} features. \n".format(len(gdf)))
+
+    # Create output folder for updated boundary GeoJSON file
     boundary_out_dir = os.path.join(out_dir, "cc_boundary")
     if not os.path.exists(boundary_out_dir):
         os.makedirs(boundary_out_dir)
-    
-    # Define the output GeoJSON file
     out_geojson = os.path.join(boundary_out_dir, "cc_boundary_" + selected_orthomosaic_FileName_noExt + ".geojson")
-    sys.stdout.write("Output boundary GeoJSON: " + out_geojson + "\n")
-    
-    if os.path.exists(out_geojson):
-        sys.stdout.write("Boundary GeoJSON already exists. Skipping generation.\n")
+    sys.stdout.write("Output boundary GeoJSON: \n" + out_geojson)
+
+    # Extract a field name from the orthomosaic filename (adjust as needed)
+    field_name = selected_orthomosaic_FileName_noExt.split('_')[0]
+    if field_name not in gdf.columns:
+        gdf[field_name] = None
+
+    # Locate the canopy cover .dat file; assume one file exists in cc_rgb folder
+    cc_rgb_dir = os.path.join(out_dir, "cc_rgb")
+    dat_files = glob.glob(os.path.join(cc_rgb_dir, "*.dat"))
+    if not dat_files:
+        sys.stdout.write("No canopy cover .dat file found in {} \n".format(cc_rgb_dir))
         return
-    
-    # For each .dat file, add a new column to the GeoDataFrame if not already present.
-    for dat_file in dat_files:
-        basename = os.path.basename(dat_file)
+    cc_dat_file = dat_files[0]
+
+    canopy_ratios = []
+
+    # Process each polygon feature one-by-one using QGIS's clip algorithm
+    for idx, feature in gdf.iterrows():
+        # Write the single feature to a temporary GeoJSON file
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp_mask:
+            single_feature = gdf.iloc[[idx]]
+            single_feature.to_file(tmp_mask.name, driver="GeoJSON")
+            tmp_mask_path = tmp_mask.name
+
+        # Prepare a temporary output file for the clipped raster
+        with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp_output:
+            tmp_output_path = tmp_output.name
+
         try:
-            date_str = basename.split("20", 1)[1].split("_", 1)[0]
-            field_name = "20" + date_str
-        except Exception as e:
-            sys.stdout.write("Error extracting date from " + basename + ": " + str(e) + "\n")
-            continue
-        
-        if field_name not in gdf.columns:
-            gdf[field_name] = None
-            sys.stdout.write("Created field: " + field_name + "\n")
-    
-    # Load the canopy cover .dat file for each date and update each feature's attribute.
-    # For each dat_file, iterate over the features in gdf:
-    for dat_file in dat_files:
-        basename = os.path.basename(dat_file)
-        try:
-            date_str = basename.split("20", 1)[1].split("_", 1)[0]
-            field_name = "20" + date_str
-        except Exception as e:
-            sys.stdout.write("Error extracting date from " + basename + ": " + str(e) + "\n")
-            continue
-        
-        sys.stdout.write("Processing " + dat_file + " for field " + field_name + "\n")
-        try:
-            cc_img = rs2.RSImage(dat_file)
-        except Exception as e:
-            sys.stdout.write("Error opening .dat file " + dat_file + ": " + str(e) + "\n")
-            continue
-        
-        # For each feature (row) in the GeoDataFrame, clip the image and compute canopy cover.
-        canopy_ratios = []
-        for idx in range(len(gdf)):
-            try:
-                clipped = cc_img.clip_by_polygon_geopandas(boundary_geojson, feature_index=idx)
-                sys.stdout.write("clipped : " + str(clipped))
-                if clipped is None:
+            sys.stdout.write("cc_dat_file : " + str(cc_dat_file) + "\n")
+            sys.stdout.write("boundary_geojson : " + str(boundary_geojson) + "\n")
+            # Run QGIS processing tool "gdal:cliprasterbymasklayer"
+            result = processing.run("gdal:cliprasterbymasklayer", {
+                'INPUT': cc_dat_file,
+                'MASK': boundary_geojson,
+                'SOURCE_CRS': None,
+                'TARGET_CRS': None,
+                'TARGET_EXTENT':None,
+                'NODATA':None,
+                'ALPHA_BAND': True,
+                'CROP_TO_CUTLINE': True,
+                'KEEP_RESOLUTION': True,
+                'SET_RESOLUTION':False,
+                'X_RESOLUTION':None,
+                'Y_RESOLUTION':None,
+                'MULTITHREADING':False,
+                'OPTIONS': '',
+                'DATA_TYPE': 0,
+                'EXTRA':'',
+                'OUTPUT': tmp_output_path
+            })
+            clipped_raster_path = result['OUTPUT']
+
+            # Open the clipped raster and read it as an array
+            ds = gdal.Open(clipped_raster_path)
+            if ds is None:
+                sys.stdout.write(f"Feature {idx}: Unable to open clipped raster. \n")
+                canopy_ratios.append(0)
+                continue
+            clipped_img = ds.ReadAsArray()
+            ds = None
+
+            # Compute canopy ratio from the clipped image
+            if clipped_img is None:
+                ratio = 0
+                sys.stdout.write("clipped_img is None \n")
+            else:
+                # If multi-band, use first band
+                if clipped_img.ndim == 3:
+                    band_data = clipped_img[0]
+                else:
+                    band_data = clipped_img
+                # Clean the array from NaN or infinite values
+                band_data = band_data[~np.isnan(band_data)]
+                band_data = band_data[~np.isinf(band_data)]
+                if band_data.size == 0:
                     ratio = 0
                 else:
-                    # Assume canopy pixels are represented as 0 in the mask:
-                    band_data = clipped[0, :, :] if clipped.ndim == 3 else clipped
-                    # Remove NaN or infinite values
-                    band_data = band_data[~np.isnan(band_data)]
-                    band_data = band_data[~np.isinf(band_data)]
-                    if band_data.size == 0:
-                        ratio = 0
-                    else:
-                        total = band_data.size
-                        canopy = band_data.sum()
-                        ratio = (canopy / total) * 100
-                    plt.figure()
-                    plt.imshow(band_data, cmap='gray')
-                    plt.title(f"Feature {idx} for {field_name} | Ratio: {ratio:.2f}%")
-                    plt.colorbar()
-                    if not os.path.exists("output"):
-                        os.makedirs("output")
-                    plt.savefig(f"output/figure_feature_{idx}_{field_name}.png")
-                    plt.close()
-                canopy_ratios.append(ratio)
-            except Exception as e:
-                sys.stdout.write("Error processing feature {} in {}: {}\n".format(idx, dat_file, str(e)))
-                canopy_ratios.append(0)
-        # Update the GeoDataFrame column with the computed ratios.
-        gdf[field_name] = canopy_ratios
-        plt.figure()
-        plt.hist(canopy_ratios, bins=10)
-        plt.title(f"Histogram of canopy ratios for {field_name}")
-        plt.xlabel("Canopy Cover Ratio (%)")
-        plt.ylabel("Frequency")
-        if not os.path.exists("output"):
-            os.makedirs("output")
-        plt.savefig(f"output/figure_canopy_ratio.png")
-        plt.close()
-        cc_img = None
-    
-    # Write the updated GeoDataFrame to the new GeoJSON file.
-    gdf.to_file(out_geojson, driver='GeoJSON')
+                    total = band_data.size
+                    canopy = band_data.sum()
+                    ratio = (canopy / total) * 100
+            canopy_ratios.append(ratio)
+
+            # (Optional) Save a histogram for debugging
+            plt.figure()
+            plt.hist(band_data.flatten(), bins=10)
+            plt.title(f"Histogram for feature {idx}")
+            hist_path = os.path.join("output", f"figure_feature_{idx}.png")
+            if not os.path.exists("output"):
+                os.makedirs("output")
+            plt.savefig(hist_path)
+            plt.close()
+            sys.stdout.write(f"Feature {idx} processed; canopy ratio: {ratio:.2f}%\n")
+        except Exception as e:
+            sys.stdout.write("Error processing feature {}: {}\n".format(idx, e))
+            canopy_ratios.append(0)
+        finally:
+            # Clean up temporary files
+            if os.path.exists(tmp_mask_path):
+                os.remove(tmp_mask_path)
+            if os.path.exists(tmp_output_path):
+                os.remove(tmp_output_path)
+
+    # Update the GeoDataFrame with the computed canopy ratios and write out the GeoJSON file.
+    gdf[field_name] = canopy_ratios
+    gdf.to_file(out_geojson, driver="GeoJSON")
     sys.stdout.write("Finished generating canopy cover boundary attributes.\n")

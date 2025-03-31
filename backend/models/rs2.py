@@ -10,6 +10,9 @@ from osgeo import gdalnumeric, ogr
 from PIL import Image, ImageDraw
 import geopandas as gpd
 import json
+import rasterio
+from rasterio.transform import from_origin
+from rasterio.mask import mask
 
 # This function will convert the rasterized clipper shapefile
 # to a mask for use within GDAL.
@@ -85,6 +88,125 @@ def stretch(a):
 			n = n + hist[i+b]
 	im = im.point(lut)
 	return imageToArray(im)
+
+def crop_envi_dat_with_geojson(dat_file, geojson_file):
+    # Locate HDR file
+    hdr_file = os.path.splitext(dat_file)[0] + ".hdr"
+    meta = parse_envi_hdr(hdr_file)
+
+    width = int(meta['samples'])
+    height = int(meta['lines'])
+    bands = int(meta['bands'])
+    dtype = get_dtype(meta['data type'])
+    interleave = meta.get('interleave', 'bsq').lower()
+    crs, transform = get_crs_and_transform(meta['map info'])
+
+    # Open the .dat file using rasterio
+    with rasterio.open(
+        dat_file, 'r',
+        driver='ENVI',
+        width=width,
+        height=height,
+        count=bands,
+        dtype=dtype,
+        crs=crs,
+        transform=transform
+    ) as src:
+        # Read and reproject GeoJSON
+        geojson = gpd.read_file(geojson_file).to_crs(src.crs)
+        geoms = [feature["geometry"] for feature in geojson.__geo_interface__["features"]]
+        out_image, out_transform = mask(src, geoms, crop=True)
+        out_meta = src.meta.copy()
+
+    # Update metadata
+    out_meta.update({
+        "driver": "GTiff",
+        "height": out_image.shape[1],
+        "width": out_image.shape[2],
+        "transform": out_transform
+    })
+
+    output_file = 'cropped_image.tif'
+    # Save cropped raster
+    with rasterio.open(output_file, 'w', **out_meta) as dest:
+        dest.write(out_image)
+
+    return output_file
+
+def crop_envi_dat_with_geometry(dat_file, geometry):
+    """
+    Crop an ENVI .dat file using a single geometry.
+    
+    Parameters:
+      dat_file (str): Path to the ENVI .dat file.
+      geometry (dict or shapely.geometry): A single polygon geometry 
+                                             (must be in the same CRS as the raster).
+    
+    Returns:
+      out_image (numpy.ndarray): Cropped image array with shape (bands, height, width)
+    """
+    # Locate HDR file and parse metadata
+    hdr_file = os.path.splitext(dat_file)[0] + ".hdr"
+    meta = parse_envi_hdr(hdr_file)
+    
+    width = int(meta['samples'])
+    height = int(meta['lines'])
+    bands = int(meta['bands'])
+    dtype = get_dtype(meta['data type'])
+    # We ignore interleave for now since rasterio handles the data read
+    crs, transform = get_crs_and_transform(meta['map info'])
+    
+    # Open the .dat file with rasterio
+    with rasterio.open(
+        dat_file, 'r',
+        driver='ENVI',
+        width=width,
+        height=height,
+        count=bands,
+        dtype=dtype,
+        crs=crs,
+        transform=transform
+    ) as src:
+        # The mask function expects a list of geometries
+        out_image, out_transform = mask(src, [geometry], crop=True)
+    
+    return out_image
+
+def parse_envi_hdr(hdr_path):
+    metadata = {}
+    with open(hdr_path, 'r') as file:
+        for line in file:
+            if '=' in line:
+                key, val = line.strip().split('=', 1)
+                metadata[key.strip().lower()] = val.strip().strip('{}')
+    return metadata
+
+def get_crs_and_transform(map_info):
+    parts = map_info.split(',')
+    x_origin = float(parts[3])
+    y_origin = float(parts[4])
+    x_pixel_size = float(parts[5])
+    y_pixel_size = float(parts[6])
+    utm_zone = parts[7].strip()
+    hemisphere = parts[8].strip().lower()
+    if hemisphere == "north":
+        epsg = 32600 + int(utm_zone)
+    else:
+        epsg = 32700 + int(utm_zone)
+    crs = f"EPSG:{epsg}"
+    transform = from_origin(x_origin, y_origin, x_pixel_size, y_pixel_size)
+    return crs, transform
+
+def get_dtype(data_type_code):
+    mapping = {
+        '1': 'uint8',
+        '2': 'int16',
+        '3': 'int32',
+        '4': 'float32',
+        '5': 'float64',
+        '12': 'uint16'
+    }
+    return mapping.get(data_type_code, 'uint8')
 
 
 class LightImage():
@@ -278,7 +400,7 @@ class RSImage(object):
         self.ext_right = self.ext_left + self.x_spacing * self.ncol
 
     def normalize(self):
-        """
+        r"""
         Normalize Image
 
         Make each band to have mean = 0 & std = 1

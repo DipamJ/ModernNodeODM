@@ -11,7 +11,7 @@ services:
       - ./backend:/app
     environment:
       - FLASK_ENV=development
-      - PYTHONPATH=/app
+      - PYTHONPATH=/app:/usr/share/qgis/python:/usr/share/qgis/python/plugins:/usr/lib/python3/dist-packages
       - DB_HOST=db  # Refers to the MySQL service by its container name
       - DB_USER=root
       - DB_PASSWORD=password
