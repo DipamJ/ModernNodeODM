@@ -1,5 +1,8 @@
 import glob
 import sys
+import uuid
+from zipfile import ZipFile
+import zipfile
 from models.boundary_model import get_all_boundaries, save_upload_boundary_metadata
 from models.chm_model import get_all_chms, save_upload_chm_metadata
 from models.orthomosaic_model import get_all_orthomosaics, save_upload_orthomosaic_metadata
@@ -18,8 +21,8 @@ from models.role_model import get_all_roles, add_role, update_role, delete_role
 from models.upload_model import save_upload_metadata, get_all_uploads, check_duplicate_upload
 import os
 from werkzeug.utils import secure_filename
-from models.canopy import generate_cc_dat, generate_cc_boundary
-import geopandas
+from models.canopy import generate_cc_dat, generate_cc_boundary, get_cc
+import geopandas as gpd
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'  # Replace with a secure key
@@ -642,32 +645,63 @@ def get_boundaries():
     except Exception as e:
         print(f"Error fetching boundaries: {e}")
         return jsonify({'error': str(e)}), 500
-    
+
 @app.route('/boundaries/upload', methods=['POST'])
 def upload_boundary_data():
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
     file = request.files["file"]
-    projectId = request.form["projectId"]
+    project_id = request.form.get("projectId")
+
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
-    if file:
-        fileName = secure_filename(file.filename)       
-        
-        filePath = os.path.join(app.config["UPLOAD_FOLDER_BOUNDARY"], fileName)
-        with open(filePath, "wb") as f:
-            for chunk in file.stream:
-                f.write(chunk)
+    if not file.filename.lower().endswith(".zip"):
+        return jsonify({"error": "Only .zip files allowed"}), 400
 
-        try:
-            save_upload_boundary_metadata(fileName, filePath, projectId)
-            return jsonify({"message": "File uploaded successfully"}), 201
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+    try:
+        # Secure filename and create a unique folder for this upload
+        zip_filename = secure_filename(file.filename)
+        unique_id = str(uuid.uuid4())
+        boundary_folder = os.path.join(app.config["UPLOAD_FOLDER_BOUNDARY"], f"boundary_{unique_id}")
+        os.makedirs(boundary_folder, exist_ok=True)
 
-    return jsonify({"error": "Invalid file format"}), 400
+        zip_path = os.path.join(boundary_folder, zip_filename)
+        file.save(zip_path)
+
+        # Extract zip
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(boundary_folder)
+
+        # Find .shp file (you may enhance this to prefer files named `boundary.shp` etc.)
+        shp_files = []
+        for root, dirs, files in os.walk(boundary_folder):
+            for f in files:
+                if f.lower().endswith('.shp'):
+                    shp_files.append(os.path.join(root, f))
+
+        if not shp_files:
+            return jsonify({"error": "No .shp file found in ZIP"}), 400
+
+        shp_path = shp_files[0]
+        shp_filename = os.path.basename(shp_path)
+        sys.stdout.write("shp_filename : " + str(shp_filename))
+        sys.stdout.write("shp_path : " + str(shp_path))
+
+        # Save metadata
+        save_upload_boundary_metadata(shp_filename, shp_path, project_id)
+
+        return jsonify({
+            "message": "Boundary uploaded successfully",
+            "shapefile": shp_filename,
+            "shapefile_path": shp_path
+        }), 201
+
+    except zipfile.BadZipFile:
+        return jsonify({"error": "Invalid ZIP file"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/orthomosaics', methods=['GET'])
 def get_orthomosaics():
@@ -747,13 +781,19 @@ def generate_rgb_attributes_endpoint():
         project = data.get("project")
         file_prefix = data.get("file_prefix", "default")
         epsg = data.get("epsg", 4326)
-        boundary_shp = data.get("boundary_shp")
+        shp_path  = data.get("boundary_folder")
         
-        if not orthomosaic_image or not project or not boundary_shp:
-            return jsonify({"error": "Missing required fields"}), 400
+        if not os.path.exists(shp_path):
+            return jsonify({"error": f"SHP path does not exist: {shp_path}"}), 400
         
         orthomosaic_path = os.path.join("orthomosaics", orthomosaic_image)
-        boundary_path = os.path.join("boundaries", boundary_shp)
+        # boundary_dir_path  = os.path.join("boundaries", boundary_folder )
+
+        # shp_files = [f for f in os.listdir(boundary_dir_path) if f.endswith(".shp")]
+        # if not shp_files:
+        #     return jsonify({"error": "No .shp file found in boundary folder"}), 400
+
+        # shp_path = os.path.join(boundary_dir_path, shp_files[0])
 
         # Define an output folder—for example, under "generated/<project>"
         output_folder = os.path.join("generated", project)
@@ -764,33 +804,45 @@ def generate_rgb_attributes_endpoint():
         generate_cc_dat(orthomosaic_path, output_folder, file_prefix)
         
         # Step 2: Generate the updated boundary shapefile with canopy cover attributes
-        generate_cc_boundary(epsg, boundary_path, output_folder, file_prefix)
+        # generate_cc_boundary(epsg, boundary_path, output_folder, file_prefix)
+        get_cc(epsg, shp_path, output_folder, file_prefix)
+        
         return jsonify({"message": "Canopy cover file generated successfully"}), 200
     except Exception as e:
         print("Error in /generate-rgb-attributes:", e)
         return jsonify({"error": str(e)}), 500
     
-@app.route('/download-rgb-attributes', methods =['POST'])
+@app.route('/download-rgb-attributes', methods=['POST'])
 def download_rgb_attributes_endpoint():
     try:
         data = request.get_json()
-        geojson_pattern = os.path.join("generated", data.get("projectName"), "cc_boundary", "cc_boundary_*.geojson")
-        geojson_files = glob.glob(geojson_pattern)
-        if not geojson_files:
-            return jsonify({"error": "No boundary file found"}), 404
-        geojson_path = geojson_files[0]
-        gdf = geopandas.read_file(geojson_path)
-        xlsx_path = geojson_path.replace(".geojson", ".xlsx")
+        project_name = data.get("projectName")
+
+        # Find the .shp file instead of .geojson
+        shp_pattern = os.path.join("generated", project_name, "cc_boundary", "cc_boundary_*.shp")
+        shp_files = glob.glob(shp_pattern)
+        if not shp_files:
+            return jsonify({"error": "No shapefile found"}), 404
+
+        shp_path = shp_files[0]
+        gdf = gpd.read_file(shp_path)
+        if 'geometry' in gdf.columns:
+            gdf = gdf.drop(columns=['geometry'])
+        # Convert to Excel
+        xlsx_path = shp_path.replace(".shp", ".xlsx")
         gdf.to_excel(xlsx_path, index=False)
-        return send_file(xlsx_path,
-                         as_attachment=True,
-                         attachment_filename=os.path.basename(xlsx_path),
-                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                        )
-        
+
+        return send_file(
+            xlsx_path,
+            as_attachment=True,
+            download_name=os.path.basename(xlsx_path),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
     except Exception as e:
-        sys.stdout.write("Error in /download-rgb-attributes:" + str(e))
+        sys.stdout.write("Error in /download-rgb-attributes: " + str(e))
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -146,7 +146,7 @@ export default function GenerateAttributes() {
         project: projectName,
         file_prefix: formData.orthomosaic.replace(".tif", ""),
         epsg: 4326,                              // Hardcoded for now
-        boundary_shp: formData.boundary
+        boundary_folder: formData.boundary
       };
       const response = await axios.post("http://localhost:5000/generate-rgb-attributes", payload);
       console.log("Generate response:", response.data);
@@ -436,7 +436,7 @@ export default function GenerateAttributes() {
                 >
                   <option value="">Select</option>
                   {dropdownData.boundaries.map((b) => (
-                    <option key={b.id_boundary} value={b.boundary_file_name}>
+                    <option key={b.id_boundary} value={b.boundary_file_path}>
                       {b.boundary_file_name}
                     </option>
                   ))}

@@ -10,6 +10,8 @@ COPY . .
 # Install OS-level dependencies needed for GDAL and building Python packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        gnupg \
+        debian-archive-keyring \
         netcat-openbsd \
         gdal-bin \
         libgdal-dev \
